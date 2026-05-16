@@ -42,7 +42,14 @@ export function LocationAutocomplete({
   const popupPointerDownRef = useRef(false);
   const initialOption = useMemo(
     () =>
-      initialLocation ? optionFromSelectedLocation(initialLocation) : null,
+      initialLocation
+        ? {
+            ...initialLocation,
+            id:
+              initialLocation.id ??
+              `${initialLocation.latitude}:${initialLocation.longitude}`,
+          }
+        : null,
     [initialLocation],
   );
   const committedValueRef = useRef<LocationOption | null>(initialOption);
@@ -365,15 +372,6 @@ function isPlace(value: unknown): value is Place {
     typeof value.latitude === "number" &&
     value.__typename === "Place"
   );
-}
-
-function optionFromSelectedLocation(
-  location: SelectedLocation,
-): LocationOption {
-  return {
-    ...location,
-    id: location.id ?? `${location.latitude}:${location.longitude}`,
-  };
 }
 
 function isSameLocationOption(

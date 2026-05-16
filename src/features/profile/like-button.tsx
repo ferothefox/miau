@@ -16,7 +16,10 @@ export function LikeButton({
     useState<RelationType>(relationType);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const liked = isLiked(currentRelation);
+  const liked =
+    currentRelation === "liked" ||
+    currentRelation === "mutual" ||
+    currentRelation === "friend";
 
   return (
     <div className="space-y-2">
@@ -50,13 +53,5 @@ export function LikeButton({
       </Button>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
     </div>
-  );
-}
-
-function isLiked(relationType: RelationType): boolean {
-  return (
-    relationType === "liked" ||
-    relationType === "mutual" ||
-    relationType === "friend"
   );
 }

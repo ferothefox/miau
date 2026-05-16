@@ -12,12 +12,6 @@ export type AppSession = {
   viewerId?: number;
 };
 
-type JwtPayload = {
-  id?: unknown;
-  token?: unknown;
-  iat?: unknown;
-};
-
 export async function getSession(): Promise<AppSession | null> {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) {
@@ -59,16 +53,9 @@ export async function clearSession(): Promise<void> {
 }
 
 export function decodeViewerId(token: string): number | undefined {
-  const payload = decodeJwtPayload(token);
-  return typeof payload?.id === "number" && Number.isFinite(payload.id)
-    ? payload.id
-    : undefined;
-}
-
-function decodeJwtPayload(token: string): JwtPayload | null {
   const [, payload] = token.split(".");
   if (!payload) {
-    return null;
+    return undefined;
   }
 
   try {
@@ -80,12 +67,12 @@ function decodeJwtPayload(token: string): JwtPayload | null {
     const parsed: unknown = JSON.parse(
       Buffer.from(padded, "base64").toString("utf8"),
     );
-    return isJwtPayload(parsed) ? parsed : null;
+    return isRecord(parsed) &&
+      typeof parsed.id === "number" &&
+      Number.isFinite(parsed.id)
+      ? parsed.id
+      : undefined;
   } catch {
-    return null;
+    return undefined;
   }
-}
-
-function isJwtPayload(value: unknown): value is JwtPayload {
-  return isRecord(value);
 }

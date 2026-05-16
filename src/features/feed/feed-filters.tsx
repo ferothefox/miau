@@ -158,7 +158,12 @@ export function FeedFiltersForm({
     [draftMode, locationSource, nextFilters],
   );
   const currentSearchParams = searchParams.toString();
-  const locationLabel = displayLocationLabel(location);
+  const locationLabel = location?.label ?? "your location";
+  const filterPhase: "closing" | "open" | "opening" = filtersAnimatingOpen
+    ? "open"
+    : filtersOpen
+      ? "opening"
+      : "closing";
 
   useEffect(() => {
     if (currentSearchParams === nextSearchParams) {
@@ -166,7 +171,9 @@ export function FeedFiltersForm({
     }
 
     const timer = window.setTimeout(() => {
-      router.replace(feedHref(nextSearchParams), { scroll: false });
+      router.replace(nextSearchParams ? `/feed?${nextSearchParams}` : "/feed", {
+        scroll: false,
+      });
     }, LIVE_FILTER_DELAY_MS);
 
     return () => window.clearTimeout(timer);
@@ -344,7 +351,7 @@ export function FeedFiltersForm({
               <FilterItem
                 index={0}
                 open={filtersAnimatingOpen}
-                phase={filterItemPhase(filtersOpen, filtersAnimatingOpen)}
+                phase={filterPhase}
                 title="Gender"
               >
                 {GENDERS.map((gender) => (
@@ -369,7 +376,7 @@ export function FeedFiltersForm({
               <FilterItem
                 index={1}
                 open={filtersAnimatingOpen}
-                phase={filterItemPhase(filtersOpen, filtersAnimatingOpen)}
+                phase={filterPhase}
                 title="Relationship"
               >
                 {RELATIONSHIPS.map(([value, label]) => (
@@ -390,7 +397,7 @@ export function FeedFiltersForm({
               <FilterItem
                 index={2}
                 open={filtersAnimatingOpen}
-                phase={filterItemPhase(filtersOpen, filtersAnimatingOpen)}
+                phase={filterPhase}
                 title="Age"
               >
                 <InputGroup className="h-7 w-24">
@@ -431,7 +438,7 @@ export function FeedFiltersForm({
               <FilterItem
                 index={3}
                 open={filtersAnimatingOpen}
-                phase={filterItemPhase(filtersOpen, filtersAnimatingOpen)}
+                phase={filterPhase}
                 title="Scope"
               >
                 {LOCATION_SCOPES.map((option) => (
@@ -453,7 +460,7 @@ export function FeedFiltersForm({
               <FilterItem
                 index={4}
                 open={filtersAnimatingOpen}
-                phase={filterItemPhase(filtersOpen, filtersAnimatingOpen)}
+                phase={filterPhase}
                 title="Radius"
               >
                 {RADII.map((option) => (
@@ -518,17 +525,6 @@ function FilterItem({
       </ItemActions>
     </Item>
   );
-}
-
-function filterItemPhase(
-  open: boolean,
-  animatingOpen: boolean,
-): "closing" | "open" | "opening" {
-  if (animatingOpen) {
-    return "open";
-  }
-
-  return open ? "opening" : "closing";
 }
 
 function ToggleButton({
@@ -599,18 +595,6 @@ function buildFilters({
     locationLabel: location?.label,
     radius: radius === "100mi" || radius === "250mi" ? radius : "infinite",
   };
-}
-
-function displayLocationLabel(location: SelectedLocation | null) {
-  if (!location) {
-    return "your location";
-  }
-
-  return location.label;
-}
-
-function feedHref(searchParams: string): string {
-  return searchParams ? `/feed?${searchParams}` : "/feed";
 }
 
 function formNumber(value: string): number | undefined {

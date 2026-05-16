@@ -1,15 +1,9 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type Dispatch,
-  type SetStateAction,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   DEFAULT_PROFILE_LIMIT,
+  type FeedPageResponse,
   type FeedFilters,
   type FeedMode,
   type OverviewProfile,
@@ -17,7 +11,6 @@ import {
 import { filtersToSearchParams } from "@/domain/barq/filters";
 import { isRecord } from "@/lib/type-guards";
 import { ProfileCard } from "./profile-card";
-import type { FeedPageResponse } from "./types";
 
 const feedPageCache = new Map<string, FeedPageResponse>();
 const MAX_FEED_PAGE_CACHE_SIZE = 48;
@@ -51,30 +44,55 @@ export function FeedClient({
     setLoading(true);
     setError(null);
 
-    const pageUrl = feedPageUrl(mode, filters, cursor);
-    const cacheKey = viewerId === undefined ? null : `${viewerId}:${pageUrl}`;
-    const cachedPage = cacheKey ? feedPageCache.get(cacheKey) : undefined;
+    const params = filtersToSearchParams(mode, filters, {
+      includeDefaultMode: true,
+      includeImplicitLocation: true,
+    });
+    params.set("cursor", cursor);
+    params.set("limit", String(DEFAULT_PROFILE_LIMIT));
 
-    if (cachedPage) {
-      applyPage(cachedPage, setProfiles, setCursor, setHasMore);
-      setLoading(false);
-      return;
-    }
+    const pageUrl = `/api/feed?${params.toString()}`;
+    const cacheKey = viewerId === undefined ? null : `${viewerId}:${pageUrl}`;
 
     try {
-      const response = await fetch(pageUrl);
+      let page = cacheKey ? feedPageCache.get(cacheKey) : undefined;
 
-      if (!response.ok) {
-        throw new Error("Could not load more profiles.");
+      if (!page) {
+        const response = await fetch(pageUrl);
+
+        if (!response.ok) {
+          throw new Error("Could not load more profiles.");
+        }
+
+        const data: unknown = await response.json();
+
+        if (!isFeedPageResponse(data)) {
+          throw new Error("Could not load more profiles.");
+        }
+
+        page = data;
+
+        if (cacheKey) {
+          feedPageCache.set(cacheKey, page);
+
+          if (feedPageCache.size > MAX_FEED_PAGE_CACHE_SIZE) {
+            const oldestKey = feedPageCache.keys().next().value;
+            if (typeof oldestKey === "string") {
+              feedPageCache.delete(oldestKey);
+            }
+          }
+        }
       }
 
-      const page = await parseFeedPageResponse(response);
-      if (cacheKey) {
-        rememberFeedPage(cacheKey, page);
-      }
-      applyPage(page, setProfiles, setCursor, setHasMore);
+      setProfiles((current) => mergeProfiles(current, page.profiles));
+      setCursor(page.cursor);
+      setHasMore(page.hasMore);
     } catch (loadError) {
-      setError(errorMessage(loadError));
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Could not load more profiles.",
+      );
     } finally {
       setLoading(false);
     }
@@ -152,45 +170,6 @@ function mergeProfiles(
   return [...current, ...next.filter((profile) => !seen.has(profile.uuid))];
 }
 
-function applyPage(
-  page: FeedPageResponse,
-  setProfiles: Dispatch<SetStateAction<OverviewProfile[]>>,
-  setCursor: Dispatch<SetStateAction<string>>,
-  setHasMore: Dispatch<SetStateAction<boolean>>,
-) {
-  setProfiles((current) => mergeProfiles(current, page.profiles));
-  setCursor(page.cursor);
-  setHasMore(page.hasMore);
-}
-
-function feedPageUrl(
-  mode: FeedMode,
-  filters: FeedFilters,
-  cursor: string,
-): string {
-  const params = filtersToSearchParams(mode, filters, {
-    includeDefaultMode: true,
-    includeImplicitLocation: true,
-  });
-
-  params.set("cursor", cursor);
-  params.set("limit", String(DEFAULT_PROFILE_LIMIT));
-
-  return `/api/feed?${params.toString()}`;
-}
-
-async function parseFeedPageResponse(
-  response: Response,
-): Promise<FeedPageResponse> {
-  const data: unknown = await response.json();
-
-  if (isFeedPageResponse(data)) {
-    return data;
-  }
-
-  throw new Error("Could not load more profiles.");
-}
-
 function isFeedPageResponse(value: unknown): value is FeedPageResponse {
   return (
     isRecord(value) &&
@@ -198,23 +177,4 @@ function isFeedPageResponse(value: unknown): value is FeedPageResponse {
     typeof value.cursor === "string" &&
     typeof value.hasMore === "boolean"
   );
-}
-
-function rememberFeedPage(cacheKey: string, page: FeedPageResponse) {
-  feedPageCache.set(cacheKey, page);
-
-  if (feedPageCache.size <= MAX_FEED_PAGE_CACHE_SIZE) {
-    return;
-  }
-
-  const oldestKey = feedPageCache.keys().next().value;
-  if (typeof oldestKey === "string") {
-    feedPageCache.delete(oldestKey);
-  }
-}
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error
-    ? error.message
-    : "Could not load more profiles.";
 }

@@ -6,14 +6,16 @@ import {
   parseFeedMode,
   type SearchParamRecord,
 } from "@/domain/barq/filters";
-import { DEFAULT_PROFILE_LIMIT } from "@/domain/barq/types";
+import {
+  DEFAULT_PROFILE_LIMIT,
+  type FeedPageResponse,
+} from "@/domain/barq/types";
 import { isBarqAuthError, toClientSafeMessage } from "@/server/barq/errors";
 import {
   clearBarqReadCacheForToken,
   getProfileSearchPage,
 } from "@/server/barq/cached";
 import { clearSession, getSession } from "@/server/session";
-import type { FeedPageResponse } from "@/features/feed/types";
 
 export async function GET(request: Request) {
   const session = await getSession();
@@ -22,12 +24,17 @@ export async function GET(request: Request) {
   }
 
   const searchParams = new URL(request.url).searchParams;
-  const paramRecord = toSearchParamRecord(searchParams);
+  const paramRecord: SearchParamRecord = {};
+  for (const [key, value] of searchParams) {
+    paramRecord[key] = value;
+  }
+
   const mode = parseFeedMode(paramRecord);
   const filters = parseFeedFilters(paramRecord);
   const cursor = searchParams.get("cursor") ?? "";
+  const limitParam = searchParams.get("limit");
   const limit = clampProfileLimit(
-    numberSearchParam(searchParams, "limit") ?? DEFAULT_PROFILE_LIMIT,
+    limitParam ? Number(limitParam) : DEFAULT_PROFILE_LIMIT,
   );
 
   try {
@@ -57,27 +64,4 @@ export async function GET(request: Request) {
       { status: 502 },
     );
   }
-}
-
-function toSearchParamRecord(searchParams: URLSearchParams): SearchParamRecord {
-  const record: SearchParamRecord = {};
-
-  for (const [key, value] of searchParams) {
-    record[key] = value;
-  }
-
-  return record;
-}
-
-function numberSearchParam(
-  searchParams: URLSearchParams,
-  key: string,
-): number | undefined {
-  const value = searchParams.get(key);
-  if (!value) {
-    return undefined;
-  }
-
-  const number = Number(value);
-  return Number.isFinite(number) ? number : undefined;
 }

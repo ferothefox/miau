@@ -7,11 +7,7 @@ import {
   normalizeProfileDetail,
 } from "@/domain/barq/normalize";
 import { parseFeedMode, type SearchParamRecord } from "@/domain/barq/filters";
-import {
-  canRenderSocialValue,
-  socialDisplayValue,
-  visibilityLabel,
-} from "@/domain/barq/permissions";
+import { visibilityLabel } from "@/domain/barq/permissions";
 import type {
   ProfileBio,
   ProfileBioAd,
@@ -255,32 +251,41 @@ function SocialsSection({ profile }: { profile: ProfileDetail }) {
         <p className="text-sm text-muted-foreground">No socials listed.</p>
       ) : (
         <div className="space-y-2">
-          {socials.map((account) => (
-            <div
-              className="rounded-lg border border-border p-3"
-              key={account.id}
-            >
-              <p className="text-sm font-semibold">{account.socialNetwork}</p>
-              {canRenderSocialValue(account) ? (
-                account.url ? (
-                  <a
-                    className="text-sm text-primary hover:underline"
-                    href={account.url}
-                  >
-                    {socialDisplayValue(account)}
-                  </a>
+          {socials.map((account) => {
+            const value =
+              account.displayName ||
+              account.value ||
+              account.url ||
+              visibilityLabel(account.accessPermission);
+            const visible =
+              account.accessPermission === "public" &&
+              Boolean(account.url || account.value || account.displayName);
+
+            return (
+              <div
+                className="rounded-lg border border-border p-3"
+                key={account.id}
+              >
+                <p className="text-sm font-semibold">{account.socialNetwork}</p>
+                {visible ? (
+                  account.url ? (
+                    <a
+                      className="text-sm text-primary hover:underline"
+                      href={account.url}
+                    >
+                      {value}
+                    </a>
+                  ) : (
+                    <p className="text-sm text-foreground">{value}</p>
+                  )
                 ) : (
-                  <p className="text-sm text-foreground">
-                    {socialDisplayValue(account)}
+                  <p className="text-sm text-muted-foreground">
+                    {visibilityLabel(account.accessPermission)}
                   </p>
-                )
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  {visibilityLabel(account.accessPermission)}
-                </p>
-              )}
-            </div>
-          ))}
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </Section>

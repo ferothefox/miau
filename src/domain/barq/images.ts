@@ -1,6 +1,6 @@
-import type { FeedMode, ProfileDetail, UploadedImage } from "./types";
+import type { FeedMode, UploadedImage } from "./types";
 
-export const BARQ_ASSET_ORIGIN = "https://assets.barq.app";
+const BARQ_ASSET_ORIGIN = "https://assets.barq.app";
 
 export function imageUrl(uuid: string, width: number): string {
   return `${BARQ_ASSET_ORIGIN}/image/${uuid}.jpeg?width=${width}`;
@@ -36,19 +36,4 @@ export function imageAspectRatio(image: UploadedImage | null): string {
   }
 
   return `${image.width} / ${image.height}`;
-}
-
-export function profileImageAlt(
-  profile: Pick<ProfileDetail, "displayName" | "username">,
-  fallback = "Profile image",
-): string {
-  if (profile.displayName) {
-    return `${profile.displayName} profile image`;
-  }
-
-  if (profile.username) {
-    return `@${profile.username} profile image`;
-  }
-
-  return fallback;
 }

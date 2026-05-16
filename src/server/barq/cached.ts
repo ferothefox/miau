@@ -4,7 +4,6 @@ import { createHash } from "node:crypto";
 import { cache } from "react";
 import { clampProfileLimit, normalizeFeedFilters } from "@/domain/barq/filters";
 import type {
-  FeatureFlagsData,
   FeedFilters,
   FeedMode,
   PlacesData,
@@ -12,19 +11,12 @@ import type {
   ProfileSearchData,
   UserData,
 } from "@/domain/barq/types";
-import {
-  featureFlags,
-  places,
-  profileDetail,
-  profileSearch,
-  user,
-} from "./operations";
+import { places, profileDetail, profileSearch, user } from "./operations";
 
 const VIEWER_TTL_MS = 60_000;
 const FEED_TTL_MS = 30_000;
 const PROFILE_TTL_MS = 60_000;
 const PLACES_TTL_MS = 5 * 60_000;
-const FEATURE_FLAGS_TTL_MS = 5 * 60_000;
 
 type CacheEntry<T> = {
   expiresAt: number;
@@ -35,7 +27,6 @@ const viewerCache = new Map<string, CacheEntry<UserData>>();
 const feedCache = new Map<string, CacheEntry<ProfileSearchData>>();
 const profileCache = new Map<string, CacheEntry<ProfileDetailData>>();
 const placesCache = new Map<string, CacheEntry<PlacesData>>();
-const featureFlagsCache = new Map<string, CacheEntry<FeatureFlagsData>>();
 
 export const getViewerUser = cache((token: string) =>
   getCachedRead(viewerCache, tokenPrefix(token), VIEWER_TTL_MS, () =>
@@ -91,15 +82,6 @@ export const getPlaces = cache((token: string, query: string) =>
   ),
 );
 
-export const getFeatureFlags = cache((token: string) =>
-  getCachedRead(
-    featureFlagsCache,
-    [tokenPrefix(token), "FeatureFlags"].join(":"),
-    FEATURE_FLAGS_TTL_MS,
-    () => featureFlags(token),
-  ),
-);
-
 export function clearBarqReadCacheForToken(token: string) {
   const prefix = tokenPrefix(token);
 
@@ -107,7 +89,6 @@ export function clearBarqReadCacheForToken(token: string) {
   deleteEntriesWithPrefix(feedCache, prefix);
   deleteEntriesWithPrefix(profileCache, prefix);
   deleteEntriesWithPrefix(placesCache, prefix);
-  deleteEntriesWithPrefix(featureFlagsCache, prefix);
 }
 
 function getCachedRead<T>(

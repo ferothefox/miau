@@ -4,7 +4,6 @@ import { join } from "node:path";
 import {
   applyDefaultFeedLocation,
   clampProfileLimit,
-  feedModeToIsAd,
   filtersToSearchParams,
   nextCursor,
   parseFeedFilters,
@@ -115,8 +114,12 @@ function headerValue(
 
 describe("feed filters", () => {
   test("maps mode to isAd", () => {
-    expect(feedModeToIsAd("sfw")).toBe(false);
-    expect(feedModeToIsAd("nsfw")).toBe(true);
+    expect(toProfileSearchVariables({ mode: "sfw", filters: {} }).isAd).toBe(
+      false,
+    );
+    expect(toProfileSearchVariables({ mode: "nsfw", filters: {} }).isAd).toBe(
+      true,
+    );
   });
 
   test("clamps profile limits and increments string cursors", () => {

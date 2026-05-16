@@ -34,7 +34,17 @@ export default async function AppLayout({
             MIAU!
           </Link>
           <nav className="flex items-center gap-3 text-sm">
-            <Suspense fallback={<AccountMenuFallback />}>
+            <Suspense
+              fallback={
+                <Button
+                  aria-label="Account menu loading"
+                  className="rounded-full"
+                  disabled
+                  size="icon-lg"
+                  variant="outline"
+                />
+              }
+            >
               <ViewerMenu token={session.token} />
             </Suspense>
           </nav>
@@ -56,18 +66,6 @@ async function ViewerMenu({ token }: { token: string }) {
       image={profileImage}
       username={profile.username}
       uuid={profile.uuid}
-    />
-  );
-}
-
-function AccountMenuFallback() {
-  return (
-    <Button
-      aria-label="Account menu loading"
-      className="rounded-full"
-      disabled
-      size="icon-lg"
-      variant="outline"
     />
   );
 }

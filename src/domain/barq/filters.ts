@@ -194,10 +194,6 @@ export function normalizeFeedFilters(filters: FeedFilters): FeedFilters {
   };
 }
 
-export function feedModeToIsAd(mode: FeedMode): boolean {
-  return mode === "nsfw";
-}
-
 export function clampProfileLimit(limit: number): number {
   if (!Number.isFinite(limit)) {
     return DEFAULT_PROFILE_LIMIT;
@@ -226,7 +222,7 @@ export function toProfileSearchVariables({
   const normalized = normalizeFeedFilters(filters);
   const searchFilters: ProfileSearchVariables["filters"] = {};
   const variables: ProfileSearchVariables = {
-    isAd: feedModeToIsAd(mode),
+    isAd: mode === "nsfw",
     filters: searchFilters,
     cursor: cursor ?? "",
     limit: clampProfileLimit(limit),
@@ -257,7 +253,15 @@ export function toProfileSearchVariables({
   }
 
   if (normalized.ageMin !== undefined || normalized.ageMax !== undefined) {
-    searchFilters.age = ageFilter(normalized.ageMin, normalized.ageMax);
+    searchFilters.age = {};
+
+    if (normalized.ageMin !== undefined) {
+      searchFilters.age.min = normalized.ageMin;
+    }
+
+    if (normalized.ageMax !== undefined) {
+      searchFilters.age.max = normalized.ageMax;
+    }
   }
 
   if (normalized.genders) {
@@ -333,23 +337,6 @@ function normalizeAge(age: number | undefined): number | undefined {
   }
 
   return Math.max(18, Math.min(120, Math.trunc(age)));
-}
-
-function ageFilter(
-  min: number | undefined,
-  max: number | undefined,
-): { min?: number; max?: number } {
-  const age: { min?: number; max?: number } = {};
-
-  if (min !== undefined) {
-    age.min = min;
-  }
-
-  if (max !== undefined) {
-    age.max = max;
-  }
-
-  return age;
 }
 
 function normalizeList(list: string[] | undefined): string[] | undefined {

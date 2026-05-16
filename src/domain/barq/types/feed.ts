@@ -1,3 +1,5 @@
+import type { OverviewProfile } from "./profile";
+
 export type FeedMode = "sfw" | "nsfw";
 
 export type FeedLocationScope = "distance" | "city" | "region" | "country";
@@ -43,6 +45,12 @@ export type ProfileSearchVariables = {
   };
   cursor: string;
   limit: number;
+};
+
+export type FeedPageResponse = {
+  profiles: OverviewProfile[];
+  cursor: string;
+  hasMore: boolean;
 };
 
 export const DEFAULT_PROFILE_LIMIT = 60;
