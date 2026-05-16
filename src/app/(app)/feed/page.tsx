@@ -5,7 +5,6 @@ import {
   type FeedFilters,
   type FeedMode,
   type OverviewProfile,
-  type ProfileLocation,
 } from "@/domain/barq/types";
 import {
   applyDefaultFeedLocation,
@@ -21,7 +20,6 @@ import { toClientSafeMessage } from "@/server/barq/errors";
 import {
   getProfileSearchPage,
   getViewerUser,
-  preloadViewerUser,
   stableFeedFiltersJson,
 } from "@/server/barq/cached";
 import { redirectToLoginOnAuthFailure } from "@/server/barq/redirects";
@@ -39,38 +37,34 @@ export default async function FeedPage({
   const mode = parseFeedMode(params);
   const parsedFilters = parseFeedFilters(params);
   const useDefaultLocation = shouldUseDefaultFeedLocation(params);
-  const fallbackKey = [
-    mode,
-    stableFeedFiltersJson(parsedFilters),
-    useDefaultLocation ? "viewer-location" : "explicit-location",
-  ].join(":");
 
-  preloadViewerUser(session.token);
+  const viewer = await getViewerUser(session.token).catch(
+    redirectToLoginOnAuthFailure,
+  );
+  const viewerProfile = normalizeProfileDetail(viewer.user.profile);
+  const filters = applyDefaultFeedLocation(
+    parsedFilters,
+    viewerProfile.location,
+    { enabled: useDefaultLocation },
+  );
+  const gridKey = feedCacheKey(session.viewerId, mode, filters).join(":");
 
   return (
-    <main className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Profiles</h1>
-        <p className="text-sm text-muted-foreground">
-          {mode.toUpperCase()} discovery with URL-owned filters.
-        </p>
-      </div>
+    <main className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6">
+      <FeedFiltersForm
+        filters={filters}
+        isDefaultLocationImplicit={
+          useDefaultLocation && Boolean(filters.location)
+        }
+        mode={mode}
+        viewerName={viewerProfile.username ?? viewerProfile.displayName}
+      />
 
-      <Suspense fallback={<FeedFiltersFallback />}>
-        <FeedFilters
-          mode={mode}
-          parsedFilters={parsedFilters}
-          token={session.token}
-          useDefaultLocation={useDefaultLocation}
-        />
-      </Suspense>
-
-      <Suspense fallback={<FeedGridFallback />} key={fallbackKey}>
+      <Suspense fallback={<FeedGridFallback />} key={gridKey}>
         <FeedGrid
+          filters={filters}
           mode={mode}
-          parsedFilters={parsedFilters}
           token={session.token}
-          useDefaultLocation={useDefaultLocation}
           viewerId={session.viewerId}
         />
       </Suspense>
@@ -78,59 +72,17 @@ export default async function FeedPage({
   );
 }
 
-async function FeedFilters({
-  mode,
-  parsedFilters,
-  token,
-  useDefaultLocation,
-}: {
-  mode: FeedMode;
-  parsedFilters: FeedFilters;
-  token: string;
-  useDefaultLocation: boolean;
-}) {
-  const location = useDefaultLocation
-    ? await getViewerLocation(token).catch(redirectToLoginOnAuthFailure)
-    : null;
-  const filters = applyDefaultFeedLocation(parsedFilters, location, {
-    enabled: useDefaultLocation,
-  });
-
-  return (
-    <FeedFiltersForm
-      filters={filters}
-      isDefaultLocationImplicit={
-        useDefaultLocation && Boolean(filters.location)
-      }
-      key={[
-        mode,
-        stableFeedFiltersJson(parsedFilters),
-        useDefaultLocation ? "implicit" : "explicit",
-      ].join(":")}
-      mode={mode}
-    />
-  );
-}
-
 async function FeedGrid({
+  filters,
   mode,
-  parsedFilters,
   token,
-  useDefaultLocation,
   viewerId,
 }: {
+  filters: FeedFilters;
   mode: FeedMode;
-  parsedFilters: FeedFilters;
   token: string;
-  useDefaultLocation: boolean;
   viewerId?: number;
 }) {
-  const location = useDefaultLocation
-    ? await getViewerLocation(token).catch(redirectToLoginOnAuthFailure)
-    : null;
-  const filters = applyDefaultFeedLocation(parsedFilters, location, {
-    enabled: useDefaultLocation,
-  });
   const filtersJson = stableFeedFiltersJson(filters);
   const cacheKey = feedCacheKey(viewerId, mode, filters).join(":");
 
@@ -168,25 +120,6 @@ async function FeedGrid({
       initialProfiles={profiles}
       mode={mode}
     />
-  );
-}
-
-async function getViewerLocation(
-  token: string,
-): Promise<ProfileLocation | null> {
-  const viewer = await getViewerUser(token);
-  return normalizeProfileDetail(viewer.user.profile).location;
-}
-
-function FeedFiltersFallback() {
-  return (
-    <div className="grid gap-6">
-      <div className="flex gap-2">
-        <Skeleton className="h-9 w-16 rounded-md" />
-        <Skeleton className="h-9 w-16 rounded-md" />
-      </div>
-      <Skeleton className="h-40 rounded-lg" />
-    </div>
   );
 }
 

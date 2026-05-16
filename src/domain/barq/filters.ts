@@ -13,9 +13,8 @@ export type SearchParamValue = string | string[] | undefined;
 export type SearchParamRecord = Record<string, SearchParamValue>;
 
 export const FEED_MODES = ["sfw", "nsfw"] as const;
-export const NO_LOCATION_FILTER_LABEL = "Anywhere";
-
 const LOCATION_SCOPES = ["distance", "city", "region", "country"] as const;
+const LEGACY_NO_LOCATION_FILTER_LABEL = "Anywhere";
 
 const RADIUS_TO_KM = {
   "100mi": 161,
@@ -90,6 +89,7 @@ export function parseFeedMode(searchParams: SearchParamRecord): FeedMode {
 export function parseFeedFilters(searchParams: SearchParamRecord): FeedFilters {
   const latitude = parseNumber(searchParams.lat);
   const longitude = parseNumber(searchParams.lng);
+  const locationLabel = cleanString(searchParams.location);
   const scopeParam = cleanString(searchParams.scope);
   const radiusParam = cleanString(searchParams.radius);
   const scope = isLocationScope(scopeParam) ? scopeParam : "distance";
@@ -102,7 +102,10 @@ export function parseFeedFilters(searchParams: SearchParamRecord): FeedFilters {
 
   const filters: FeedFilters = {
     displayName: cleanString(searchParams.displayName),
-    locationLabel: cleanString(searchParams.location),
+    locationLabel:
+      locationLabel === LEGACY_NO_LOCATION_FILTER_LABEL
+        ? undefined
+        : locationLabel,
     requireProfileImage: parseBoolean(searchParams.requireProfileImage),
     ageMin: parseNumber(searchParams.ageMin),
     ageMax: parseNumber(searchParams.ageMax),
@@ -132,8 +135,11 @@ export function parseFeedFilters(searchParams: SearchParamRecord): FeedFilters {
 export function shouldUseDefaultFeedLocation(
   searchParams: SearchParamRecord,
 ): boolean {
+  const locationLabel = cleanString(searchParams.location);
+
   return (
-    cleanString(searchParams.location) === undefined &&
+    (locationLabel === undefined ||
+      locationLabel === LEGACY_NO_LOCATION_FILTER_LABEL) &&
     parseNumber(searchParams.lat) === undefined &&
     parseNumber(searchParams.lng) === undefined
   );
@@ -281,7 +287,6 @@ export function filtersToSearchParams(
   mode: FeedMode,
   filters: FeedFilters,
   options: {
-    clearedLocation?: boolean;
     includeDefaultMode?: boolean;
     includeImplicitLocation?: boolean;
   } = {},
@@ -304,9 +309,7 @@ export function filtersToSearchParams(
     params.set("requireProfileImage", "1");
   }
 
-  if (options.clearedLocation) {
-    params.set("location", NO_LOCATION_FILTER_LABEL);
-  } else if (normalized.location && options.includeImplicitLocation !== false) {
+  if (normalized.location && options.includeImplicitLocation !== false) {
     setParam(params, "location", normalized.locationLabel);
     params.set("lat", String(normalized.location.latitude));
     params.set("lng", String(normalized.location.longitude));

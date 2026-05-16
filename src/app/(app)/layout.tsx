@@ -31,15 +31,9 @@ export default async function AppLayout({
             className="text-lg font-semibold tracking-tight text-foreground"
             href="/feed"
           >
-            Miau
+            MIAU!
           </Link>
           <nav className="flex items-center gap-3 text-sm">
-            <Link
-              className="font-medium text-muted-foreground transition hover:text-foreground"
-              href="/feed"
-            >
-              Feed
-            </Link>
             <Suspense
               fallback={
                 <Button

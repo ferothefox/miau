@@ -193,7 +193,7 @@ describe("feed filters", () => {
     expect(params.toString()).toBe("");
   });
 
-  test("does not default feed location after an explicit cleared location", () => {
+  test("treats legacy Anywhere location URLs as the default viewer location", () => {
     const params = { mode: "sfw", location: "Anywhere" };
     const filters = applyDefaultFeedLocation(
       parseFeedFilters(params),
@@ -217,22 +217,26 @@ describe("feed filters", () => {
       { enabled: shouldUseDefaultFeedLocation(params) },
     );
 
-    expect(shouldUseDefaultFeedLocation(params)).toBe(false);
-    expect(filters.location).toBe(undefined);
-    expect(filters.locationLabel).toBe("Anywhere");
+    expect(shouldUseDefaultFeedLocation(params)).toBe(true);
+    expect(filters.locationLabel).toBe("Tempe, Arizona, US");
+    expect(filters.location).toEqual({
+      latitude: 33.4144,
+      longitude: -111.9094,
+      type: "distance",
+      distanceKm: undefined,
+    });
   });
 
-  test("serializes explicit cleared location without default mode", () => {
+  test("does not serialize location labels without coordinates", () => {
     const params = filtersToSearchParams(
       "sfw",
       { locationLabel: "Anywhere" },
       {
-        clearedLocation: true,
         includeDefaultMode: false,
       },
     );
 
-    expect(params.toString()).toBe("location=Anywhere");
+    expect(params.toString()).toBe("");
   });
 });
 

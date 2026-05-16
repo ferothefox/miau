@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useMemo, useRef, useState, useTransition } from "react";
+import { Combobox as BaseCombobox } from "@base-ui/react";
 import {
   Combobox,
   ComboboxContent,
@@ -23,11 +24,17 @@ type LocationOption = SelectedLocation;
 const MIN_PLACE_SEARCH_LENGTH = 3;
 
 export function LocationAutocomplete({
+  autoFocus = false,
   initialLocation,
+  onClose,
   onSelect,
+  variant = "field",
 }: {
+  autoFocus?: boolean;
   initialLocation?: SelectedLocation;
+  onClose?: () => void;
   onSelect: (location: SelectedLocation | null) => void;
+  variant?: "field" | "inline";
 }) {
   const id = useId();
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -89,6 +96,8 @@ export function LocationAutocomplete({
           return;
         }
 
+        onClose?.();
+
         if (selectedValue) {
           setSearchResults([selectedValue]);
           return;
@@ -96,8 +105,10 @@ export function LocationAutocomplete({
 
         if (pendingClearRef.current) {
           pendingClearRef.current = false;
-          committedValueRef.current = null;
-          onSelect(null);
+          if (committedValueRef.current) {
+            setSelectedValue(committedValueRef.current);
+            setSearchResults([committedValueRef.current]);
+          }
           return;
         }
 
@@ -179,13 +190,23 @@ export function LocationAutocomplete({
         });
       }}
     >
-      <ComboboxInput
-        id={id}
-        className="w-full"
-        placeholder="Search city or place"
-        showClear
-        showTrigger
-      />
+      {variant === "inline" ? (
+        <BaseCombobox.Input
+          autoFocus={autoFocus}
+          id={id}
+          className="inline [field-sizing:content] h-[1em] max-w-full appearance-none border-0 bg-transparent p-0 font-[inherit] leading-[inherit] tracking-normal text-[inherit] text-primary underline decoration-primary/30 decoration-2 underline-offset-4 outline-none placeholder:text-primary/45 focus-visible:ring-0"
+          placeholder="Search city or place"
+        />
+      ) : (
+        <ComboboxInput
+          autoFocus={autoFocus}
+          id={id}
+          className="w-full"
+          placeholder="Search city or place"
+          showClear
+          showTrigger
+        />
+      )}
       <ComboboxContent aria-busy={isPending || undefined}>
         {status ? (
           <ComboboxStatus className="px-1.5 py-1 text-sm text-muted-foreground">

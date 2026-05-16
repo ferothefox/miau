@@ -1,28 +1,29 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { IconSearch } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from "@/components/ui/input-group";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemTitle,
+} from "@/components/ui/item";
 import type {
   FeedFilters,
   FeedLocationScope,
   FeedMode,
 } from "@/domain/barq/types";
-import {
-  filtersToSearchParams,
-  NO_LOCATION_FILTER_LABEL,
-} from "@/domain/barq/filters";
+import { filtersToSearchParams } from "@/domain/barq/filters";
 import {
   LocationAutocomplete,
   type SelectedLocation,
@@ -39,15 +40,10 @@ const GENDERS = [
 const RELATIONSHIPS = [
   ["single", "Single"],
   ["relationship", "Relationship"],
-  ["open_relationship", "Open relationship"],
-  ["domestic_partnership", "Domestic partnership"],
-  ["engaged_married", "Engaged/married"],
+  ["open_relationship", "Open"],
+  ["domestic_partnership", "Domestic"],
+  ["engaged_married", "Married"],
   ["other", "Other"],
-] as const;
-
-const SEX_POSITIONS = [
-  ["top", "Top"],
-  ["bottom", "Bottom"],
 ] as const;
 
 const LOCATION_SCOPES = [
@@ -58,25 +54,29 @@ const LOCATION_SCOPES = [
 ] as const;
 
 const RADII = [
-  { label: "Any distance", value: "infinite" },
-  { label: "100 miles", value: "100mi" },
-  { label: "250 miles", value: "250mi" },
+  { label: "No limit", value: "infinite" },
+  { label: "100 mi", value: "100mi" },
+  { label: "250 mi", value: "250mi" },
 ] as const;
 
 const LIVE_FILTER_DELAY_MS = 300;
-type LocationSource = "implicit" | "explicit" | "cleared" | "unset";
+type LocationSource = "implicit" | "explicit" | "unset";
 
 export function FeedFiltersForm({
+  filters,
   isDefaultLocationImplicit = false,
   mode,
-  filters,
+  viewerName,
 }: {
+  filters: FeedFilters;
   isDefaultLocationImplicit?: boolean;
   mode: FeedMode;
-  filters: FeedFilters;
+  viewerName: string;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [locationEditing, setLocationEditing] = useState(false);
   const [draftMode, setDraftMode] = useState(mode);
   const [location, setLocation] = useState<SelectedLocation | null>(
     filters.location
@@ -92,9 +92,7 @@ export function FeedFiltersForm({
       return isDefaultLocationImplicit ? "implicit" : "explicit";
     }
 
-    return filters.locationLabel === NO_LOCATION_FILTER_LABEL
-      ? "cleared"
-      : "unset";
+    return "unset";
   });
   const [displayName, setDisplayName] = useState(filters.displayName ?? "");
   const [ageMin, setAgeMin] = useState(
@@ -109,14 +107,12 @@ export function FeedFiltersForm({
   const [radius, setRadius] = useState<"infinite" | "100mi" | "250mi">(
     filters.radius ?? "infinite",
   );
-  const [requireProfileImage, setRequireProfileImage] = useState(
-    filters.requireProfileImage ?? false,
-  );
   const [genders, setGenders] = useState(filters.genders ?? []);
   const [relationshipStatus, setRelationshipStatus] = useState(
     filters.relationshipStatus ?? [],
   );
-  const [sexPositions, setSexPositions] = useState(filters.sexPositions ?? []);
+  const [sexPositions] = useState(filters.sexPositions ?? []);
+  const [requireProfileImage] = useState(filters.requireProfileImage ?? false);
   const nextFilters = useMemo(
     () =>
       buildFilters({
@@ -128,7 +124,6 @@ export function FeedFiltersForm({
         radius,
         relationshipStatus,
         requireProfileImage,
-        source: locationSource,
         scope,
         sexPositions,
       }),
@@ -141,7 +136,6 @@ export function FeedFiltersForm({
       radius,
       relationshipStatus,
       requireProfileImage,
-      locationSource,
       scope,
       sexPositions,
     ],
@@ -149,13 +143,13 @@ export function FeedFiltersForm({
   const nextSearchParams = useMemo(
     () =>
       filtersToSearchParams(draftMode, nextFilters, {
-        clearedLocation: locationSource === "cleared",
         includeDefaultMode: false,
         includeImplicitLocation: locationSource !== "implicit",
       }).toString(),
     [draftMode, locationSource, nextFilters],
   );
   const currentSearchParams = searchParams.toString();
+  const locationLabel = displayLocationLabel(location);
 
   useEffect(() => {
     if (currentSearchParams === nextSearchParams) {
@@ -170,13 +164,59 @@ export function FeedFiltersForm({
   }, [currentSearchParams, nextSearchParams, router]);
 
   return (
-    <form
-      className="grid gap-6"
-      onSubmit={(event) => {
-        event.preventDefault();
-      }}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <section className="grid gap-5">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+        <h1 className="max-w-4xl text-4xl leading-[1.05] font-bold tracking-tight text-balance sm:text-5xl">
+          <span className="block">Hi {viewerName}!</span>
+          <span className="block">
+            You&apos;re in {""}
+            <span className="inline align-baseline">
+              {locationEditing ? (
+                <LocationAutocomplete
+                  autoFocus
+                  initialLocation={location ?? undefined}
+                  onClose={() => setLocationEditing(false)}
+                  onSelect={(nextLocation) => {
+                    if (!nextLocation) {
+                      setLocationEditing(false);
+                      return;
+                    }
+
+                    setLocation(nextLocation);
+                    setLocationSource("explicit");
+                    setLocationEditing(false);
+                  }}
+                  variant="inline"
+                />
+              ) : (
+                <button
+                  className="text-left text-primary underline decoration-primary/30 decoration-2 underline-offset-4 transition hover:decoration-primary/70 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                  type="button"
+                  onClick={() => setLocationEditing(true)}
+                >
+                  {locationLabel}
+                </button>
+              )}
+            </span>
+          </span>
+        </h1>
+
+        <InputGroup className="h-10 bg-background/70 lg:mt-1 lg:w-80">
+          <InputGroupAddon align="inline-start">
+            <IconSearch className="size-4" />
+          </InputGroupAddon>
+          <InputGroupInput
+            aria-label="Search by display name"
+            name="displayName"
+            placeholder="Find anyone"
+            type="search"
+            value={displayName}
+            onChange={(event) => setDisplayName(event.target.value)}
+          />
+        </InputGroup>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <div className="flex flex-wrap gap-2">
           {(["sfw", "nsfw"] as const).map((value) => (
             <Button
@@ -190,183 +230,176 @@ export function FeedFiltersForm({
             </Button>
           ))}
         </div>
+        <button
+          aria-expanded={filtersOpen}
+          className="text-sm font-medium text-muted-foreground underline underline-offset-4 transition hover:text-foreground"
+          type="button"
+          onClick={() => setFiltersOpen((open) => !open)}
+        >
+          Filter out the fluff
+        </button>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-4">
-        <div className="grid gap-2 lg:col-span-2">
-          <Label htmlFor="displayName">Display name</Label>
-          <Input
-            id="displayName"
-            name="displayName"
-            type="search"
-            value={displayName}
-            onChange={(event) => setDisplayName(event.target.value)}
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="ageMin">Age min</Label>
-          <Input
-            id="ageMin"
-            min={18}
-            name="ageMin"
-            type="number"
-            value={ageMin}
-            onChange={(event) => setAgeMin(event.target.value)}
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="ageMax">Age max</Label>
-          <Input
-            id="ageMax"
-            min={18}
-            name="ageMax"
-            type="number"
-            value={ageMax}
-            onChange={(event) => setAgeMax(event.target.value)}
-          />
-        </div>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_160px_160px]">
-        <div className="grid gap-2">
-          <Label>Location</Label>
-          <LocationAutocomplete
-            initialLocation={location ?? undefined}
-            onSelect={(nextLocation) => {
-              setLocation(nextLocation);
-              setLocationSource(nextLocation ? "explicit" : "cleared");
-            }}
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label>Scope</Label>
-          <Select
-            items={LOCATION_SCOPES}
-            name="scope"
-            value={scope}
-            onValueChange={(value) => {
-              if (isLocationScope(value)) {
-                setScope(value);
-                setLocationSource((source) =>
-                  source === "implicit" ? "explicit" : source,
-                );
-              }
-            }}
+      {filtersOpen ? (
+        <ItemGroup className="gap-0 divide-y divide-border/70">
+          <FilterItem
+            description="Choose who appears in your feed."
+            title="Gender"
           >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent align="start">
-              <SelectGroup>
-                {LOCATION_SCOPES.map((scope) => (
-                  <SelectItem key={scope.value} value={scope.value}>
-                    {scope.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="grid gap-2">
-          <Label>Radius</Label>
-          <Select
-            items={RADII}
-            name="radius"
-            value={radius}
-            onValueChange={(value) => {
-              if (isRadius(value)) {
-                setRadius(value);
-                setLocationSource((source) =>
-                  source === "implicit" ? "explicit" : source,
-                );
-              }
-            }}
+            {GENDERS.map((gender) => (
+              <ToggleButton
+                key={gender}
+                active={genders.includes(gender)}
+                onClick={() =>
+                  setGenders((values) =>
+                    toggleListValue(values, gender, !values.includes(gender)),
+                  )
+                }
+              >
+                {gender}
+              </ToggleButton>
+            ))}
+          </FilterItem>
+
+          <FilterItem
+            description="Match the kind of availability you want to see."
+            title="Relationship"
           >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent align="start">
-              <SelectGroup>
-                {RADII.map((radius) => (
-                  <SelectItem key={radius.value} value={radius.value}>
-                    {radius.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+            {RELATIONSHIPS.map(([value, label]) => (
+              <ToggleButton
+                key={value}
+                active={relationshipStatus.includes(value)}
+                onClick={() =>
+                  setRelationshipStatus((values) =>
+                    toggleListValue(values, value, !values.includes(value)),
+                  )
+                }
+              >
+                {label}
+              </ToggleButton>
+            ))}
+          </FilterItem>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <CheckboxGroup
-          label="Genders"
-          name="genders"
-          options={GENDERS.map((value) => [value, value])}
-          values={genders}
-          onValuesChange={setGenders}
-        />
-        <CheckboxGroup
-          label="Relationship"
-          name="relationshipStatus"
-          options={RELATIONSHIPS}
-          values={relationshipStatus}
-          onValuesChange={setRelationshipStatus}
-        />
-        <CheckboxGroup
-          label="Sex positions"
-          name="sexPositions"
-          options={SEX_POSITIONS}
-          values={sexPositions}
-          onValuesChange={setSexPositions}
-        />
-      </div>
+          <FilterItem description="Keep results in a useful range." title="Age">
+            <InputGroup className="w-28">
+              <InputGroupAddon align="inline-start">
+                <InputGroupText>Min</InputGroupText>
+              </InputGroupAddon>
+              <InputGroupInput
+                aria-label="Minimum age"
+                min={18}
+                type="number"
+                value={ageMin}
+                onChange={(event) => setAgeMin(event.target.value)}
+              />
+            </InputGroup>
+            <span className="flex h-8 items-center text-sm text-muted-foreground">
+              to
+            </span>
+            <InputGroup className="w-28">
+              <InputGroupAddon align="inline-start">
+                <InputGroupText>Max</InputGroupText>
+              </InputGroupAddon>
+              <InputGroupInput
+                aria-label="Maximum age"
+                min={18}
+                type="number"
+                value={ageMax}
+                onChange={(event) => setAgeMax(event.target.value)}
+              />
+            </InputGroup>
+          </FilterItem>
 
-      <Label>
-        <Checkbox
-          checked={requireProfileImage}
-          name="requireProfileImage"
-          value="1"
-          onCheckedChange={setRequireProfileImage}
-        />
-        Require profile image
-      </Label>
-    </form>
+          <FilterItem
+            description="Decide how tightly location should match."
+            title="Scope"
+          >
+            {LOCATION_SCOPES.map((option) => (
+              <ToggleButton
+                key={option.value}
+                active={scope === option.value}
+                onClick={() => {
+                  setScope(option.value);
+                  setLocationSource((source) =>
+                    source === "implicit" ? "explicit" : source,
+                  );
+                }}
+              >
+                {option.label}
+              </ToggleButton>
+            ))}
+          </FilterItem>
+
+          <FilterItem
+            description="Only applies when scope is distance."
+            title="Radius"
+          >
+            {RADII.map((option) => (
+              <ToggleButton
+                key={option.value}
+                active={radius === option.value}
+                disabled={scope !== "distance"}
+                onClick={() => {
+                  setRadius(option.value);
+                  setLocationSource((source) =>
+                    source === "implicit" ? "explicit" : source,
+                  );
+                }}
+              >
+                {option.label}
+              </ToggleButton>
+            ))}
+          </FilterItem>
+        </ItemGroup>
+      ) : null}
+    </section>
   );
 }
 
-function CheckboxGroup({
-  label,
-  name,
-  onValuesChange,
-  options,
-  values,
+function FilterItem({
+  children,
+  description,
+  title,
 }: {
-  label: string;
-  name: string;
-  onValuesChange: (values: string[]) => void;
-  options: readonly (readonly [string, string])[];
-  values: string[];
+  children: ReactNode;
+  description: string;
+  title: string;
 }) {
   return (
-    <div aria-label={label} className="grid gap-2" role="group">
-      <Label>{label}</Label>
-      <div className="grid gap-2">
-        {options.map(([value, text]) => (
-          <Label key={value}>
-            <Checkbox
-              checked={values.includes(value)}
-              name={name}
-              value={value}
-              onCheckedChange={(checked) => {
-                onValuesChange(toggleListValue(values, value, checked));
-              }}
-            />
-            {text}
-          </Label>
-        ))}
-      </div>
-    </div>
+    <Item className="flex-col items-start rounded-none border-0 px-0 py-4 sm:flex-row">
+      <ItemContent className="w-full sm:w-64 sm:flex-none">
+        <ItemTitle>{title}</ItemTitle>
+        <ItemDescription>{description}</ItemDescription>
+      </ItemContent>
+      <ItemActions className="flex w-full flex-wrap justify-start gap-2 sm:ml-auto sm:w-auto sm:flex-1 sm:justify-end">
+        {children}
+      </ItemActions>
+    </Item>
+  );
+}
+
+function ToggleButton({
+  active,
+  children,
+  disabled,
+  onClick,
+}: {
+  active: boolean;
+  children: ReactNode;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <Button
+      aria-pressed={active}
+      disabled={disabled}
+      size="sm"
+      type="button"
+      variant={active ? "default" : "outline"}
+      onClick={onClick}
+    >
+      {children}
+    </Button>
   );
 }
 
@@ -379,7 +412,6 @@ function buildFilters({
   radius,
   relationshipStatus,
   requireProfileImage,
-  source,
   scope,
   sexPositions,
 }: {
@@ -391,7 +423,6 @@ function buildFilters({
   radius: "infinite" | "100mi" | "250mi";
   relationshipStatus: string[];
   requireProfileImage: boolean;
-  source: LocationSource;
   scope: FeedLocationScope;
   sexPositions: string[];
 }): FeedFilters {
@@ -412,11 +443,17 @@ function buildFilters({
             radius === "100mi" ? 161 : radius === "250mi" ? 402 : undefined,
         }
       : undefined,
-    locationLabel:
-      location?.label ??
-      (source === "cleared" ? NO_LOCATION_FILTER_LABEL : undefined),
+    locationLabel: location?.label,
     radius: radius === "100mi" || radius === "250mi" ? radius : "infinite",
   };
+}
+
+function displayLocationLabel(location: SelectedLocation | null) {
+  if (!location) {
+    return "your location";
+  }
+
+  return location.label;
 }
 
 function feedHref(searchParams: string): string {
@@ -431,19 +468,6 @@ function formNumber(value: string): number | undefined {
 
   const number = Number(text);
   return Number.isFinite(number) ? number : undefined;
-}
-
-function isLocationScope(value: unknown): value is FeedLocationScope {
-  return (
-    value === "distance" ||
-    value === "city" ||
-    value === "region" ||
-    value === "country"
-  );
-}
-
-function isRadius(value: unknown): value is "infinite" | "100mi" | "250mi" {
-  return value === "infinite" || value === "100mi" || value === "250mi";
 }
 
 function toggleListValue(
