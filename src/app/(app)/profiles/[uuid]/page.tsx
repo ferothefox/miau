@@ -53,7 +53,7 @@ export default async function ProfilePage({
   return (
     <main className="mx-auto grid max-w-6xl gap-6 px-4 py-6 sm:px-6">
       <section className="overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-sm">
-        <div className="relative z-0 h-56 bg-muted sm:h-72">
+        <div className="h-56 bg-muted sm:h-72">
           {headerImage ? (
             <BarqImage
               alt={`${profile.displayName} header image`}
@@ -66,8 +66,8 @@ export default async function ProfilePage({
             <div className="h-full w-full bg-[linear-gradient(135deg,var(--primary),var(--muted))]" />
           )}
         </div>
-        <div className="relative z-10 grid gap-5 p-5 md:grid-cols-[180px_1fr_auto] md:items-end">
-          <div className="relative z-20 -mt-24 aspect-square overflow-hidden rounded-xl border-4 border-card bg-muted shadow-sm md:-mt-28">
+        <div className="grid gap-5 p-5 md:grid-cols-[180px_1fr_auto] md:items-end">
+          <div className="-mt-24 aspect-square overflow-hidden rounded-xl border-4 border-card bg-muted shadow-sm md:-mt-28">
             {primaryImage ? (
               <BarqImage
                 alt={`${profile.displayName} profile image`}

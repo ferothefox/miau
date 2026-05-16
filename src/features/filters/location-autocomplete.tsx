@@ -74,7 +74,7 @@ export function LocationAutocomplete({
         }}
       />
       {(places.length > 0 || loading) && (
-        <div className="absolute z-[120] mt-2 grid w-full gap-1 bg-popover p-1">
+        <div className="absolute mt-2 grid w-full gap-1 bg-popover p-1">
           {loading ? (
             <p className="text-sm text-muted-foreground">Searching...</p>
           ) : (
