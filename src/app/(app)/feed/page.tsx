@@ -99,7 +99,9 @@ async function FeedFilters({
   return (
     <FeedFiltersForm
       filters={filters}
-      isDefaultLocationImplicit={useDefaultLocation && Boolean(filters.location)}
+      isDefaultLocationImplicit={
+        useDefaultLocation && Boolean(filters.location)
+      }
       key={[
         mode,
         stableFeedFiltersJson(parsedFilters),

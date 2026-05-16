@@ -116,9 +116,7 @@ export function FeedFiltersForm({
   const [relationshipStatus, setRelationshipStatus] = useState(
     filters.relationshipStatus ?? [],
   );
-  const [sexPositions, setSexPositions] = useState(
-    filters.sexPositions ?? [],
-  );
+  const [sexPositions, setSexPositions] = useState(filters.sexPositions ?? []);
   const nextFilters = useMemo(
     () =>
       buildFilters({

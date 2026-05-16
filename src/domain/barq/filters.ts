@@ -306,10 +306,7 @@ export function filtersToSearchParams(
 
   if (options.clearedLocation) {
     params.set("location", NO_LOCATION_FILTER_LABEL);
-  } else if (
-    normalized.location &&
-    options.includeImplicitLocation !== false
-  ) {
+  } else if (normalized.location && options.includeImplicitLocation !== false) {
     setParam(params, "location", normalized.locationLabel);
     params.set("lat", String(normalized.location.latitude));
     params.set("lng", String(normalized.location.longitude));

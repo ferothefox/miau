@@ -32,7 +32,8 @@ export function LocationAutocomplete({
   const id = useId();
   const abortControllerRef = useRef<AbortController | null>(null);
   const initialOption = useMemo(
-    () => (initialLocation ? optionFromSelectedLocation(initialLocation) : null),
+    () =>
+      initialLocation ? optionFromSelectedLocation(initialLocation) : null,
     [initialLocation],
   );
   const committedValueRef = useRef<LocationOption | null>(initialOption);
@@ -259,9 +260,12 @@ async function searchPlaces(
   signal: AbortSignal,
 ): Promise<{ places: LocationOption[]; error: string | null }> {
   try {
-    const response = await fetch(`/api/places?query=${encodeURIComponent(query)}`, {
-      signal,
-    });
+    const response = await fetch(
+      `/api/places?query=${encodeURIComponent(query)}`,
+      {
+        signal,
+      },
+    );
 
     if (!response.ok) {
       return { places: [], error: "Could not search places." };
@@ -292,7 +296,9 @@ function optionFromPlace(place: Place): LocationOption {
   };
 }
 
-function optionFromSelectedLocation(location: SelectedLocation): LocationOption {
+function optionFromSelectedLocation(
+  location: SelectedLocation,
+): LocationOption {
   return {
     ...location,
     id: location.id ?? `${location.latitude}:${location.longitude}`,
