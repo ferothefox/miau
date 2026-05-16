@@ -34,9 +34,12 @@ export function LocationAutocomplete({
     const timer = window.setTimeout(async () => {
       setLoading(true);
       try {
-        const response = await fetch(`/api/places?query=${encodeURIComponent(query)}`, {
-          signal: controller.signal,
-        });
+        const response = await fetch(
+          `/api/places?query=${encodeURIComponent(query)}`,
+          {
+            signal: controller.signal,
+          },
+        );
         if (!response.ok) {
           setPlaces([]);
           return;

@@ -1,4 +1,7 @@
-import { DEFAULT_PROFILE_LIMIT, type OverviewProfile } from "@/domain/barq/types";
+import {
+  DEFAULT_PROFILE_LIMIT,
+  type OverviewProfile,
+} from "@/domain/barq/types";
 import {
   feedCacheKey,
   nextCursor,

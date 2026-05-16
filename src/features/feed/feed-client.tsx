@@ -1,7 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { DEFAULT_PROFILE_LIMIT, type FeedFilters, type FeedMode, type OverviewProfile } from "@/domain/barq/types";
+import {
+  DEFAULT_PROFILE_LIMIT,
+  type FeedFilters,
+  type FeedMode,
+  type OverviewProfile,
+} from "@/domain/barq/types";
 import { ProfileCard } from "./profile-card";
 import type { FeedPagePayload, FeedPageResponse } from "./types";
 
@@ -101,8 +106,13 @@ export function FeedClient({
         ))}
       </div>
 
-      <div ref={sentinelRef} className="flex min-h-16 items-center justify-center">
-        {loading ? <p className="text-sm text-muted-foreground">Loading more...</p> : null}
+      <div
+        ref={sentinelRef}
+        className="flex min-h-16 items-center justify-center"
+      >
+        {loading ? (
+          <p className="text-sm text-muted-foreground">Loading more...</p>
+        ) : null}
         {!hasMore && !loading ? (
           <p className="text-sm text-muted-foreground">End of feed</p>
         ) : null}
@@ -117,7 +127,10 @@ export function FeedClient({
   );
 }
 
-function mergeProfiles(current: OverviewProfile[], next: OverviewProfile[]): OverviewProfile[] {
+function mergeProfiles(
+  current: OverviewProfile[],
+  next: OverviewProfile[],
+): OverviewProfile[] {
   const seen = new Set(current.map((profile) => profile.uuid));
   return [...current, ...next.filter((profile) => !seen.has(profile.uuid))];
 }

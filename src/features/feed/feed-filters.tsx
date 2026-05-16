@@ -14,7 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { FeedFilters, FeedLocationScope, FeedMode } from "@/domain/barq/types";
+import type {
+  FeedFilters,
+  FeedLocationScope,
+  FeedMode,
+} from "@/domain/barq/types";
 import { filtersToSearchParams } from "@/domain/barq/filters";
 import {
   LocationAutocomplete,
@@ -137,7 +141,10 @@ export function FeedFiltersForm({
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_160px_160px]">
         <div className="grid gap-2">
           <Label>Location</Label>
-          <LocationAutocomplete initialLocation={location ?? undefined} onSelect={setLocation} />
+          <LocationAutocomplete
+            initialLocation={location ?? undefined}
+            onSelect={setLocation}
+          />
         </div>
         <div className="grid gap-2">
           <Label>Scope</Label>
@@ -162,7 +169,11 @@ export function FeedFiltersForm({
         </div>
         <div className="grid gap-2">
           <Label>Radius</Label>
-          <Select defaultValue={filters.radius ?? "infinite"} items={RADII} name="radius">
+          <Select
+            defaultValue={filters.radius ?? "infinite"}
+            items={RADII}
+            name="radius"
+          >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -242,7 +253,10 @@ function CheckboxGroup({
   );
 }
 
-function filtersFromFormData(formData: FormData, location: SelectedLocation | null): FeedFilters {
+function filtersFromFormData(
+  formData: FormData,
+  location: SelectedLocation | null,
+): FeedFilters {
   const scope = formText(formData, "scope") as FeedLocationScope;
   const radius = formText(formData, "radius");
 
@@ -259,7 +273,8 @@ function filtersFromFormData(formData: FormData, location: SelectedLocation | nu
           latitude: location.latitude,
           longitude: location.longitude,
           type: scope,
-          distanceKm: radius === "100mi" ? 161 : radius === "250mi" ? 402 : undefined,
+          distanceKm:
+            radius === "100mi" ? 161 : radius === "250mi" ? 402 : undefined,
         }
       : undefined,
     locationLabel: location?.label,

@@ -35,9 +35,13 @@ export function ProfileCard({
       </div>
       <div className="space-y-3 p-4">
         <div>
-          <h2 className="truncate text-base font-semibold">{profile.displayName}</h2>
+          <h2 className="truncate text-base font-semibold">
+            {profile.displayName}
+          </h2>
           {profile.username ? (
-            <p className="truncate text-sm text-muted-foreground">@{profile.username}</p>
+            <p className="truncate text-sm text-muted-foreground">
+              @{profile.username}
+            </p>
           ) : null}
         </div>
         <div className="flex flex-wrap gap-2 text-xs font-medium">
@@ -52,7 +56,10 @@ export function ProfileCard({
             </span>
           ) : null}
           {profile.roles?.slice(0, 2).map((role) => (
-            <span className="rounded-full bg-muted px-2.5 py-1 text-muted-foreground" key={role}>
+            <span
+              className="rounded-full bg-muted px-2.5 py-1 text-muted-foreground"
+              key={role}
+            >
               {role}
             </span>
           ))}

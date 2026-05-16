@@ -1,4 +1,10 @@
-import type { ProfileDetail, ProfileImage, ProfileKink, Sona, SonaImage } from "./types";
+import type {
+  ProfileDetail,
+  ProfileImage,
+  ProfileKink,
+  Sona,
+  SonaImage,
+} from "./types";
 
 export type GalleryGroups = {
   visible: ProfileImage[];
@@ -10,7 +16,9 @@ export type KinkCategory = {
   kinks: ProfileKink[];
 };
 
-export function splitProfileImages(images: ProfileImage[] | null | undefined): GalleryGroups {
+export function splitProfileImages(
+  images: ProfileImage[] | null | undefined,
+): GalleryGroups {
   const safeImages = images ?? [];
 
   return {
@@ -19,8 +27,12 @@ export function splitProfileImages(images: ProfileImage[] | null | undefined): G
   };
 }
 
-export function hydrateSonaImages(profile: Pick<ProfileDetail, "images" | "sonas">): Sona[] {
-  const imagesById = new Map((profile.images ?? []).map((image) => [image.id, image]));
+export function hydrateSonaImages(
+  profile: Pick<ProfileDetail, "images" | "sonas">,
+): Sona[] {
+  const imagesById = new Map(
+    (profile.images ?? []).map((image) => [image.id, image]),
+  );
 
   return (profile.sonas ?? []).map((sona) => ({
     ...sona,
@@ -35,7 +47,9 @@ export function hydrateSonaImages(profile: Pick<ProfileDetail, "images" | "sonas
   }));
 }
 
-export function groupKinksByCategory(kinks: ProfileKink[] | null | undefined): KinkCategory[] {
+export function groupKinksByCategory(
+  kinks: ProfileKink[] | null | undefined,
+): KinkCategory[] {
   const groups = new Map<string, ProfileKink[]>();
 
   for (const profileKink of kinks ?? []) {
@@ -47,7 +61,9 @@ export function groupKinksByCategory(kinks: ProfileKink[] | null | undefined): K
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([categoryName, groupedKinks]) => ({
       categoryName,
-      kinks: groupedKinks.sort((a, b) => a.kink.displayName.localeCompare(b.kink.displayName)),
+      kinks: groupedKinks.sort((a, b) =>
+        a.kink.displayName.localeCompare(b.kink.displayName),
+      ),
     }));
 }
 
@@ -64,8 +80,14 @@ export function normalizeProfileDetail(profile: ProfileDetail): ProfileDetail {
   };
 }
 
-export function distanceLabel(distance: number | null | undefined): string | null {
-  if (distance === null || distance === undefined || !Number.isFinite(distance)) {
+export function distanceLabel(
+  distance: number | null | undefined,
+): string | null {
+  if (
+    distance === null ||
+    distance === undefined ||
+    !Number.isFinite(distance)
+  ) {
     return null;
   }
 

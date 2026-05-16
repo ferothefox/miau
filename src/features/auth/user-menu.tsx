@@ -68,7 +68,9 @@ export function UserMenu({
       <DropdownMenuContent align="end" className="min-w-56" sideOffset={8}>
         <DropdownMenuGroup>
           <DropdownMenuLabel>
-            <span className="block truncate text-foreground">{displayName}</span>
+            <span className="block truncate text-foreground">
+              {displayName}
+            </span>
             {username ? (
               <span className="block truncate font-normal text-muted-foreground">
                 @{username}
@@ -97,7 +99,9 @@ export function UserMenu({
             >
               <DropdownMenuRadioItem value="light">Light</DropdownMenuRadioItem>
               <DropdownMenuRadioItem value="dark">Dark</DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="system">System</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="system">
+                System
+              </DropdownMenuRadioItem>
             </DropdownMenuRadioGroup>
           </DropdownMenuSubContent>
         </DropdownMenuSub>

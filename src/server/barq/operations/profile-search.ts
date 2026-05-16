@@ -1,6 +1,10 @@
 import "server-only";
 
-import type { FeedFilters, FeedMode, ProfileSearchData } from "@/domain/barq/types";
+import type {
+  FeedFilters,
+  FeedMode,
+  ProfileSearchData,
+} from "@/domain/barq/types";
 import { toProfileSearchVariables } from "@/domain/barq/filters";
 import { barqGraphQL } from "../http";
 import { OVERVIEW_PROFILE_FRAGMENT } from "./fragments";

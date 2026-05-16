@@ -16,7 +16,10 @@ query Places($query: String!) {
 ${PLACE_FRAGMENT}
 `;
 
-export function places(token: string, variables: PlacesVariables): Promise<PlacesData> {
+export function places(
+  token: string,
+  variables: PlacesVariables,
+): Promise<PlacesData> {
   return barqGraphQL<PlacesData, PlacesVariables>({
     token,
     operationName: "Places",

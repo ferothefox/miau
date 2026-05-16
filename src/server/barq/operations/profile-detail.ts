@@ -1,6 +1,9 @@
 import "server-only";
 
-import type { ProfileDetailData, ProfileDetailVariables } from "@/domain/barq/types";
+import type {
+  ProfileDetailData,
+  ProfileDetailVariables,
+} from "@/domain/barq/types";
 import { barqGraphQL } from "../http";
 import { PROFILE_DETAIL_FRAGMENTS } from "./fragments";
 

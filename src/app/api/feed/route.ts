@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { clampProfileLimit, nextCursor, normalizeFeedFilters } from "@/domain/barq/filters";
+import {
+  clampProfileLimit,
+  nextCursor,
+  normalizeFeedFilters,
+} from "@/domain/barq/filters";
 import { DEFAULT_PROFILE_LIMIT, type FeedMode } from "@/domain/barq/types";
 import { isBarqAuthError, toClientSafeMessage } from "@/server/barq/errors";
 import { profileSearch } from "@/server/barq/operations";

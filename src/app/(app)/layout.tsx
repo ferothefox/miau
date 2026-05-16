@@ -20,11 +20,17 @@ export default async function AppLayout({
     <div className="min-h-dvh bg-background text-foreground">
       <header className="sticky top-0 z-[100] border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <Link className="text-lg font-semibold tracking-tight text-foreground" href="/feed">
+          <Link
+            className="text-lg font-semibold tracking-tight text-foreground"
+            href="/feed"
+          >
             Miau
           </Link>
           <nav className="flex items-center gap-3 text-sm">
-            <Link className="font-medium text-muted-foreground transition hover:text-foreground" href="/feed">
+            <Link
+              className="font-medium text-muted-foreground transition hover:text-foreground"
+              href="/feed"
+            >
               Feed
             </Link>
             <UserMenu

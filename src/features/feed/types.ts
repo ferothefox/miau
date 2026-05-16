@@ -1,4 +1,8 @@
-import type { FeedFilters, FeedMode, OverviewProfile } from "@/domain/barq/types";
+import type {
+  FeedFilters,
+  FeedMode,
+  OverviewProfile,
+} from "@/domain/barq/types";
 
 export type FeedPagePayload = {
   mode: FeedMode;

@@ -2,7 +2,10 @@ import "server-only";
 
 import type { UserData } from "@/domain/barq/types";
 import { barqGraphQL } from "../http";
-import { BLOCKED_CONTENT_FRAGMENT, PROFILE_DETAIL_FRAGMENTS } from "./fragments";
+import {
+  BLOCKED_CONTENT_FRAGMENT,
+  PROFILE_DETAIL_FRAGMENTS,
+} from "./fragments";
 
 export const USER_QUERY = `
 query User {

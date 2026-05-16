@@ -8,7 +8,9 @@ const VISIBILITY_LABELS: Record<string, string> = {
   private: "Private",
 };
 
-export function visibilityLabel(permission: PrivacyVisibility | null | undefined): string {
+export function visibilityLabel(
+  permission: PrivacyVisibility | null | undefined,
+): string {
   if (!permission) {
     return "Restricted";
   }
@@ -17,9 +19,17 @@ export function visibilityLabel(permission: PrivacyVisibility | null | undefined
 }
 
 export function canRenderSocialValue(account: ProfileSocialAccount): boolean {
-  return account.accessPermission === "public" && Boolean(account.url || account.value || account.displayName);
+  return (
+    account.accessPermission === "public" &&
+    Boolean(account.url || account.value || account.displayName)
+  );
 }
 
 export function socialDisplayValue(account: ProfileSocialAccount): string {
-  return account.displayName || account.value || account.url || visibilityLabel(account.accessPermission);
+  return (
+    account.displayName ||
+    account.value ||
+    account.url ||
+    visibilityLabel(account.accessPermission)
+  );
 }

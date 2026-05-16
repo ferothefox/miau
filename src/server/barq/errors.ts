@@ -84,7 +84,10 @@ export function normalizeHttpError(
   });
 }
 
-export function normalizeNetworkError(error: unknown, operationName?: string): BarqUpstreamError {
+export function normalizeNetworkError(
+  error: unknown,
+  operationName?: string,
+): BarqUpstreamError {
   return new BarqUpstreamError({
     code: "NETWORK_ERROR",
     message: "Barq is temporarily unreachable. Try again shortly.",
@@ -109,7 +112,11 @@ export function detectAuthErrorCode(value: unknown): BarqErrorCode | null {
     return "AUTH_INVALID";
   }
 
-  if (text.includes("split") || text.includes("missing auth") || text.includes("authorization")) {
+  if (
+    text.includes("split") ||
+    text.includes("missing auth") ||
+    text.includes("authorization")
+  ) {
     return "AUTH_MISSING";
   }
 

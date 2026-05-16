@@ -1,6 +1,9 @@
 import "server-only";
 
-import type { LikeProfileData, LikeProfileVariables } from "@/domain/barq/types";
+import type {
+  LikeProfileData,
+  LikeProfileVariables,
+} from "@/domain/barq/types";
 import { barqGraphQL } from "../http";
 
 export const LIKE_PROFILE_MUTATION = `

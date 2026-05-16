@@ -12,15 +12,22 @@ export type LikeActionResult = {
   error?: string;
 };
 
-export async function likeProfileAction(uuid: string): Promise<LikeActionResult> {
+export async function likeProfileAction(
+  uuid: string,
+): Promise<LikeActionResult> {
   return updateProfileLike(uuid, true);
 }
 
-export async function unlikeProfileAction(uuid: string): Promise<LikeActionResult> {
+export async function unlikeProfileAction(
+  uuid: string,
+): Promise<LikeActionResult> {
   return updateProfileLike(uuid, false);
 }
 
-async function updateProfileLike(uuid: string, liked: boolean): Promise<LikeActionResult> {
+async function updateProfileLike(
+  uuid: string,
+  liked: boolean,
+): Promise<LikeActionResult> {
   if (!uuid.trim()) {
     return {
       ok: false,

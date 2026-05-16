@@ -73,7 +73,9 @@ function isFeedMode(value: string | undefined): value is FeedMode {
   return value === "sfw" || value === "nsfw";
 }
 
-function isLocationScope(value: string | undefined): value is FeedLocationScope {
+function isLocationScope(
+  value: string | undefined,
+): value is FeedLocationScope {
   return LOCATION_SCOPES.some((scope) => scope === value);
 }
 
@@ -234,7 +236,10 @@ export function toProfileSearchVariables({
   return variables;
 }
 
-export function filtersToSearchParams(mode: FeedMode, filters: FeedFilters): URLSearchParams {
+export function filtersToSearchParams(
+  mode: FeedMode,
+  filters: FeedFilters,
+): URLSearchParams {
   const normalized = normalizeFeedFilters(filters);
   const params = new URLSearchParams();
 
@@ -263,8 +268,17 @@ export function filtersToSearchParams(mode: FeedMode, filters: FeedFilters): URL
   return params;
 }
 
-export function feedCacheKey(viewerId: number | undefined, mode: FeedMode, filters: FeedFilters) {
-  return ["feed", viewerId ?? "anonymous", mode, JSON.stringify(normalizeFeedFilters(filters))] as const;
+export function feedCacheKey(
+  viewerId: number | undefined,
+  mode: FeedMode,
+  filters: FeedFilters,
+) {
+  return [
+    "feed",
+    viewerId ?? "anonymous",
+    mode,
+    JSON.stringify(normalizeFeedFilters(filters)),
+  ] as const;
 }
 
 function normalizeAge(age: number | undefined): number | undefined {

@@ -12,7 +12,8 @@ export function LikeButton({
   uuid: string;
   relationType: RelationType;
 }) {
-  const [currentRelation, setCurrentRelation] = useState<RelationType>(relationType);
+  const [currentRelation, setCurrentRelation] =
+    useState<RelationType>(relationType);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const liked = isLiked(currentRelation);
@@ -53,5 +54,9 @@ export function LikeButton({
 }
 
 function isLiked(relationType: RelationType): boolean {
-  return relationType === "liked" || relationType === "mutual" || relationType === "friend";
+  return (
+    relationType === "liked" ||
+    relationType === "mutual" ||
+    relationType === "friend"
+  );
 }

@@ -7,8 +7,17 @@ import {
   normalizeProfileDetail,
 } from "@/domain/barq/normalize";
 import { parseFeedMode, type SearchParamRecord } from "@/domain/barq/filters";
-import { canRenderSocialValue, socialDisplayValue, visibilityLabel } from "@/domain/barq/permissions";
-import type { ProfileBio, ProfileBioAd, ProfileDetail, Sona } from "@/domain/barq/types";
+import {
+  canRenderSocialValue,
+  socialDisplayValue,
+  visibilityLabel,
+} from "@/domain/barq/permissions";
+import type {
+  ProfileBio,
+  ProfileBioAd,
+  ProfileDetail,
+  Sona,
+} from "@/domain/barq/types";
 import { profileDetail } from "@/server/barq/operations";
 import { redirectToLoginOnAuthFailure } from "@/server/barq/redirects";
 import { requireSession } from "@/server/session";
@@ -26,7 +35,9 @@ export default async function ProfilePage({
   const [{ uuid }, query] = await Promise.all([params, searchParams]);
   const mode = parseFeedMode(query);
   const session = await requireSession();
-  const data = await profileDetail(session.token, { uuid }).catch(redirectToLoginOnAuthFailure);
+  const data = await profileDetail(session.token, { uuid }).catch(
+    redirectToLoginOnAuthFailure,
+  );
 
   if (!data.profile) {
     notFound();
@@ -73,14 +84,25 @@ export default async function ProfilePage({
           </div>
           <div className="space-y-3">
             <div>
-              <h1 className="text-3xl font-semibold tracking-tight">{profile.displayName}</h1>
+              <h1 className="text-3xl font-semibold tracking-tight">
+                {profile.displayName}
+              </h1>
               <p className="text-sm text-muted-foreground">
-                {[profile.username ? `@${profile.username}` : null, profile.age ? `${profile.age}` : null, location]
+                {[
+                  profile.username ? `@${profile.username}` : null,
+                  profile.age ? `${profile.age}` : null,
+                  location,
+                ]
                   .filter(Boolean)
                   .join(" / ")}
               </p>
             </div>
-            <BadgeList values={[profile.relationType ?? undefined, ...(profile.roles ?? [])]} />
+            <BadgeList
+              values={[
+                profile.relationType ?? undefined,
+                ...(profile.roles ?? []),
+              ]}
+            />
           </div>
           <LikeButton relationType={profile.relationType} uuid={profile.uuid} />
         </div>
@@ -89,7 +111,9 @@ export default async function ProfilePage({
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="space-y-6">
           <BioSection bio={profile.bio} />
-          {mode === "nsfw" && profile.bioAd ? <AdultBioSection bioAd={profile.bioAd} /> : null}
+          {mode === "nsfw" && profile.bioAd ? (
+            <AdultBioSection bioAd={profile.bioAd} />
+          ) : null}
           <ProfileGallery images={profile.images} />
           <SonaSection sonas={hydratedSonas} />
           <KinksSection groups={kinkGroups} />
@@ -108,7 +132,9 @@ function BioSection({ bio }: { bio: ProfileBio | null }) {
   return (
     <Section title="Bio">
       {bio?.biography ? (
-        <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">{bio.biography}</p>
+        <p className="text-sm leading-6 whitespace-pre-wrap text-foreground">
+          {bio.biography}
+        </p>
       ) : (
         <p className="text-sm text-muted-foreground">No biography provided.</p>
       )}
@@ -129,14 +155,19 @@ function AdultBioSection({ bioAd }: { bioAd: ProfileBioAd }) {
   return (
     <Section title="Adult Bio">
       {bioAd.biography ? (
-        <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">{bioAd.biography}</p>
+        <p className="text-sm leading-6 whitespace-pre-wrap text-foreground">
+          {bioAd.biography}
+        </p>
       ) : null}
       <DefinitionList
         items={[
           ["Positions", bioAd.sexPositions?.join(", ")],
           ["Behaviour", bioAd.behaviour?.join(", ")],
           ["Safe sex", bioAd.safeSex],
-          ["Can host", bioAd.canHost === null ? undefined : bioAd.canHost ? "Yes" : "No"],
+          [
+            "Can host",
+            bioAd.canHost === null ? undefined : bioAd.canHost ? "Yes" : "No",
+          ],
         ]}
       />
     </Section>
@@ -167,7 +198,10 @@ function SonaSection({ sonas }: { sonas: Sona[] }) {
               <div>
                 <h3 className="font-semibold">{sona.displayName}</h3>
                 <p className="text-sm text-muted-foreground">
-                  {[sona.species?.displayName, sona.hasFursuit ? "Fursuit" : null]
+                  {[
+                    sona.species?.displayName,
+                    sona.hasFursuit ? "Fursuit" : null,
+                  ]
                     .filter(Boolean)
                     .join(" / ")}
                 </p>
@@ -180,7 +214,11 @@ function SonaSection({ sonas }: { sonas: Sona[] }) {
   );
 }
 
-function KinksSection({ groups }: { groups: ReturnType<typeof groupKinksByCategory> }) {
+function KinksSection({
+  groups,
+}: {
+  groups: ReturnType<typeof groupKinksByCategory>;
+}) {
   if (groups.length === 0) {
     return null;
   }
@@ -218,15 +256,23 @@ function SocialsSection({ profile }: { profile: ProfileDetail }) {
       ) : (
         <div className="space-y-2">
           {socials.map((account) => (
-            <div className="rounded-lg border border-border p-3" key={account.id}>
+            <div
+              className="rounded-lg border border-border p-3"
+              key={account.id}
+            >
               <p className="text-sm font-semibold">{account.socialNetwork}</p>
               {canRenderSocialValue(account) ? (
                 account.url ? (
-                  <a className="text-sm text-primary hover:underline" href={account.url}>
+                  <a
+                    className="text-sm text-primary hover:underline"
+                    href={account.url}
+                  >
                     {socialDisplayValue(account)}
                   </a>
                 ) : (
-                  <p className="text-sm text-foreground">{socialDisplayValue(account)}</p>
+                  <p className="text-sm text-foreground">
+                    {socialDisplayValue(account)}
+                  </p>
                 )
               ) : (
                 <p className="text-sm text-muted-foreground">
@@ -251,7 +297,10 @@ function GroupsSection({ profile }: { profile: ProfileDetail }) {
     <Section title="Groups">
       <div className="space-y-2">
         {groups.map(({ group }) => (
-          <div className="flex items-center gap-3 rounded-lg border border-border p-3" key={group.uuid}>
+          <div
+            className="flex items-center gap-3 rounded-lg border border-border p-3"
+            key={group.uuid}
+          >
             {group.image ? (
               <BarqImage
                 alt={`${group.displayName} group image`}
@@ -264,7 +313,9 @@ function GroupsSection({ profile }: { profile: ProfileDetail }) {
             )}
             <div>
               <p className="text-sm font-semibold">{group.displayName}</p>
-              {group.isVerified ? <p className="text-xs text-muted-foreground">Verified</p> : null}
+              {group.isVerified ? (
+                <p className="text-xs text-muted-foreground">Verified</p>
+              ) : null}
             </div>
           </div>
         ))}
@@ -295,7 +346,13 @@ function EventsSection({ profile }: { profile: ProfileDetail }) {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <section className="space-y-4 rounded-xl border border-border bg-card p-5 text-card-foreground">
       <h2 className="text-lg font-semibold">{title}</h2>
@@ -304,7 +361,11 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function DefinitionList({ items }: { items: Array<[string, string | undefined | null]> }) {
+function DefinitionList({
+  items,
+}: {
+  items: Array<[string, string | undefined | null]>;
+}) {
   const visibleItems = items.filter(([, value]) => Boolean(value));
 
   if (visibleItems.length === 0) {
@@ -346,7 +407,9 @@ function BadgeList({ values }: { values: Array<string | undefined | null> }) {
 function locationLabel(profile: ProfileDetail): string | null {
   const place = profile.location?.place ?? profile.location?.homePlace;
   const distance = distanceLabel(profile.location?.distance);
-  const placeText = place ? [place.place, place.region, place.countryCode].filter(Boolean).join(", ") : null;
+  const placeText = place
+    ? [place.place, place.region, place.countryCode].filter(Boolean).join(", ")
+    : null;
 
   return [placeText, distance].filter(Boolean).join(" / ") || null;
 }

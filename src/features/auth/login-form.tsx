@@ -28,7 +28,7 @@ export function LoginForm() {
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-8">
       <div className="space-y-3">
-        <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+        <p className="text-sm font-semibold tracking-wide text-primary uppercase">
           Miau
         </p>
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">

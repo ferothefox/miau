@@ -10,13 +10,17 @@ import { BarqImage } from "./barq-image";
 export function ProfileGallery({ images }: { images: ProfileImage[] }) {
   const groups = useMemo(() => splitProfileImages(images), [images]);
   const [selectedId, setSelectedId] = useState(groups.visible[0]?.id ?? null);
-  const selected = groups.visible.find((image) => image.id === selectedId) ?? groups.visible[0];
+  const selected =
+    groups.visible.find((image) => image.id === selectedId) ??
+    groups.visible[0];
 
   if (groups.visible.length === 0 && groups.locked.length === 0) {
     return (
       <section className="rounded-xl border border-border bg-card p-5 text-card-foreground">
         <h2 className="text-lg font-semibold">Images</h2>
-        <p className="mt-2 text-sm text-muted-foreground">No gallery images are available.</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          No gallery images are available.
+        </p>
       </section>
     );
   }
@@ -47,8 +51,8 @@ export function ProfileGallery({ images }: { images: ProfileImage[] }) {
           <Button
             className={
               profileImage.id === selected?.id
-                ? "h-auto aspect-square overflow-hidden rounded-lg p-0 ring-2 ring-ring"
-                : "h-auto aspect-square overflow-hidden rounded-lg p-0 ring-1 ring-border"
+                ? "aspect-square h-auto overflow-hidden rounded-lg p-0 ring-2 ring-ring"
+                : "aspect-square h-auto overflow-hidden rounded-lg p-0 ring-1 ring-border"
             }
             key={profileImage.id}
             type="button"

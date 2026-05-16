@@ -14,7 +14,7 @@ export function choosePrimaryImage(
   mode: FeedMode,
 ): UploadedImage | null {
   return mode === "nsfw"
-    ? profile.primaryImageAd ?? profile.primaryImage
+    ? (profile.primaryImageAd ?? profile.primaryImage)
     : profile.primaryImage;
 }
 
@@ -26,8 +26,8 @@ export function chooseHeaderImage(
   mode: FeedMode,
 ): UploadedImage | null {
   return mode === "nsfw"
-    ? profile.headerImageAd ?? profile.headerImage ?? null
-    : profile.headerImage ?? null;
+    ? (profile.headerImageAd ?? profile.headerImage ?? null)
+    : (profile.headerImage ?? null);
 }
 
 export function imageAspectRatio(image: UploadedImage | null): string {

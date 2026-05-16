@@ -56,15 +56,19 @@ describe("Barq request handling", () => {
   });
 
   test("normalizes known auth failures", () => {
-    expect(detectAuthErrorCode([{ message: "Cannot read properties of undefined (reading 'split')" }])).toBe(
-      "AUTH_MISSING",
-    );
+    expect(
+      detectAuthErrorCode([
+        { message: "Cannot read properties of undefined (reading 'split')" },
+      ]),
+    ).toBe("AUTH_MISSING");
     expect(detectAuthErrorCode([{ message: "invalid signature" }])).toBe(
       "AUTH_SIGNATURE_INVALID",
     );
-    expect(detectAuthErrorCode([{ extensions: { code: "UNAUTHENTICATED" }, message: "Token invalid" }])).toBe(
-      "AUTH_INVALID",
-    );
+    expect(
+      detectAuthErrorCode([
+        { extensions: { code: "UNAUTHENTICATED" }, message: "Token invalid" },
+      ]),
+    ).toBe("AUTH_INVALID");
   });
 
   test("keeps ProfileDetail aligned with Barq web query shape", () => {
@@ -137,10 +141,27 @@ describe("feed filters", () => {
 
 describe("image helpers and normalizers", () => {
   test("generates Barq asset URLs and selects images by mode", () => {
-    expect(imageUrl("abc", 512)).toBe("https://assets.barq.app/image/abc.jpeg?width=512");
-    expect(choosePrimaryImage({ primaryImage: safeImage, primaryImageAd: adImage }, "sfw")).toBe(safeImage);
-    expect(choosePrimaryImage({ primaryImage: safeImage, primaryImageAd: adImage }, "nsfw")).toBe(adImage);
-    expect(chooseHeaderImage({ headerImage: safeImage, headerImageAd: adImage }, "nsfw")).toBe(adImage);
+    expect(imageUrl("abc", 512)).toBe(
+      "https://assets.barq.app/image/abc.jpeg?width=512",
+    );
+    expect(
+      choosePrimaryImage(
+        { primaryImage: safeImage, primaryImageAd: adImage },
+        "sfw",
+      ),
+    ).toBe(safeImage);
+    expect(
+      choosePrimaryImage(
+        { primaryImage: safeImage, primaryImageAd: adImage },
+        "nsfw",
+      ),
+    ).toBe(adImage);
+    expect(
+      chooseHeaderImage(
+        { headerImage: safeImage, headerImageAd: adImage },
+        "nsfw",
+      ),
+    ).toBe(adImage);
   });
 
   test("splits locked images", () => {
@@ -230,10 +251,9 @@ describe("image helpers and normalizers", () => {
     ]);
 
     expect(groups[0].categoryName).toBe("Play");
-    expect(groups[0].kinks.map((profileKink) => profileKink.kink.displayName)).toEqual([
-      "Alpha",
-      "Beta",
-    ]);
+    expect(
+      groups[0].kinks.map((profileKink) => profileKink.kink.displayName),
+    ).toEqual(["Alpha", "Beta"]);
 
     const normalized = normalizeProfileDetail({
       id: "1",

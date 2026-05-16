@@ -1,4 +1,10 @@
-import type { IDString, Place, PrivacyVisibility, RelationType, UploadedImage } from "./common";
+import type {
+  IDString,
+  Place,
+  PrivacyVisibility,
+  RelationType,
+  UploadedImage,
+} from "./common";
 
 export type ProfileLocation = {
   type: "gps" | "manual" | string;
