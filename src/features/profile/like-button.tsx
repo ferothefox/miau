@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Button } from "@/components/ui/button";
 import type { RelationType } from "@/domain/barq/types";
 import { likeProfileAction, unlikeProfileAction } from "./actions";
 
@@ -18,14 +19,11 @@ export function LikeButton({
 
   return (
     <div className="space-y-2">
-      <button
-        className={
-          liked
-            ? "h-11 rounded-lg border border-pink-200 bg-pink-50 px-4 text-sm font-semibold text-pink-700 transition hover:bg-pink-100 disabled:opacity-60"
-            : "h-11 rounded-lg bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-60"
-        }
+      <Button
+        className="h-11 px-4"
         disabled={pending}
         type="button"
+        variant={liked ? "outline" : "default"}
         onClick={() => {
           const optimisticRelation = liked ? null : "liked";
           const previousRelation = currentRelation;
@@ -48,8 +46,8 @@ export function LikeButton({
         }}
       >
         {pending ? "Updating..." : liked ? "Unlike" : "Like"}
-      </button>
-      {error ? <p className="text-sm text-red-700">{error}</p> : null}
+      </Button>
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
     </div>
   );
 }

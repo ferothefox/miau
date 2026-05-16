@@ -22,7 +22,7 @@ export function BarqImage({
         className={className}
         style={{ aspectRatio: "1 / 1" } as CSSProperties}
       >
-        <span className="text-sm font-medium text-zinc-500">Locked</span>
+        <span className="text-sm font-medium text-muted-foreground">Locked</span>
       </div>
     );
   }

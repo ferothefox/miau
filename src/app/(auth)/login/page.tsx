@@ -9,7 +9,7 @@ export default async function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-dvh bg-zinc-50 px-6 py-12">
+    <main className="flex min-h-dvh bg-background px-6 py-12">
       <section className="m-auto w-full">
         <LoginForm />
       </section>

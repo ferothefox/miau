@@ -16,10 +16,10 @@ export function ProfileCard({
 
   return (
     <Link
-      className="group overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md"
+      className="group overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-sm transition hover:-translate-y-0.5 hover:border-ring/50 hover:shadow-md"
       href={`/profiles/${profile.uuid}?mode=${mode}`}
     >
-      <div className="relative aspect-square overflow-hidden bg-zinc-100">
+      <div className="relative aspect-square overflow-hidden bg-muted">
         {image ? (
           <BarqImage
             alt={`${profile.displayName} profile image`}
@@ -28,33 +28,31 @@ export function ProfileCard({
             width={512}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-zinc-100 text-sm font-medium text-zinc-500">
+          <div className="flex h-full w-full items-center justify-center bg-muted text-sm font-medium text-muted-foreground">
             No image
           </div>
         )}
       </div>
       <div className="space-y-3 p-4">
         <div>
-          <h2 className="truncate text-base font-semibold text-zinc-950">
-            {profile.displayName}
-          </h2>
+          <h2 className="truncate text-base font-semibold">{profile.displayName}</h2>
           {profile.username ? (
-            <p className="truncate text-sm text-zinc-500">@{profile.username}</p>
+            <p className="truncate text-sm text-muted-foreground">@{profile.username}</p>
           ) : null}
         </div>
         <div className="flex flex-wrap gap-2 text-xs font-medium">
           {distance ? (
-            <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-zinc-700">
+            <span className="rounded-full bg-secondary px-2.5 py-1 text-secondary-foreground">
               {distance}
             </span>
           ) : null}
           {profile.relationType ? (
-            <span className="rounded-full bg-pink-50 px-2.5 py-1 text-pink-700">
+            <span className="rounded-full bg-primary/10 px-2.5 py-1 text-primary">
               {profile.relationType}
             </span>
           ) : null}
           {profile.roles?.slice(0, 2).map((role) => (
-            <span className="rounded-full bg-orange-50 px-2.5 py-1 text-orange-700" key={role}>
+            <span className="rounded-full bg-muted px-2.5 py-1 text-muted-foreground" key={role}>
               {role}
             </span>
           ))}

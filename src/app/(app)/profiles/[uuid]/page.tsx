@@ -41,8 +41,8 @@ export default async function ProfilePage({
 
   return (
     <main className="mx-auto grid max-w-6xl gap-6 px-4 py-6 sm:px-6">
-      <section className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
-        <div className="relative h-56 bg-zinc-100 sm:h-72">
+      <section className="overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+        <div className="relative z-0 h-56 bg-muted sm:h-72">
           {headerImage ? (
             <BarqImage
               alt={`${profile.displayName} header image`}
@@ -52,11 +52,11 @@ export default async function ProfilePage({
               priority
             />
           ) : (
-            <div className="h-full w-full bg-[linear-gradient(135deg,#f97316,#0284c7)]" />
+            <div className="h-full w-full bg-[linear-gradient(135deg,var(--primary),var(--muted))]" />
           )}
         </div>
-        <div className="grid gap-5 p-5 md:grid-cols-[180px_1fr_auto] md:items-end">
-          <div className="-mt-24 aspect-square overflow-hidden rounded-xl border-4 border-white bg-zinc-100 shadow-sm md:-mt-28">
+        <div className="relative z-10 grid gap-5 p-5 md:grid-cols-[180px_1fr_auto] md:items-end">
+          <div className="relative z-20 -mt-24 aspect-square overflow-hidden rounded-xl border-4 border-card bg-muted shadow-sm md:-mt-28">
             {primaryImage ? (
               <BarqImage
                 alt={`${profile.displayName} profile image`}
@@ -66,17 +66,15 @@ export default async function ProfilePage({
                 priority
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-sm font-medium text-zinc-500">
+              <div className="flex h-full w-full items-center justify-center text-sm font-medium text-muted-foreground">
                 No image
               </div>
             )}
           </div>
           <div className="space-y-3">
             <div>
-              <h1 className="text-3xl font-semibold tracking-tight text-zinc-950">
-                {profile.displayName}
-              </h1>
-              <p className="text-sm text-zinc-500">
+              <h1 className="text-3xl font-semibold tracking-tight">{profile.displayName}</h1>
+              <p className="text-sm text-muted-foreground">
                 {[profile.username ? `@${profile.username}` : null, profile.age ? `${profile.age}` : null, location]
                   .filter(Boolean)
                   .join(" / ")}
@@ -110,9 +108,9 @@ function BioSection({ bio }: { bio: ProfileBio | null }) {
   return (
     <Section title="Bio">
       {bio?.biography ? (
-        <p className="whitespace-pre-wrap text-sm leading-6 text-zinc-700">{bio.biography}</p>
+        <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">{bio.biography}</p>
       ) : (
-        <p className="text-sm text-zinc-500">No biography provided.</p>
+        <p className="text-sm text-muted-foreground">No biography provided.</p>
       )}
       <DefinitionList
         items={[
@@ -131,7 +129,7 @@ function AdultBioSection({ bioAd }: { bioAd: ProfileBioAd }) {
   return (
     <Section title="Adult Bio">
       {bioAd.biography ? (
-        <p className="whitespace-pre-wrap text-sm leading-6 text-zinc-700">{bioAd.biography}</p>
+        <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">{bioAd.biography}</p>
       ) : null}
       <DefinitionList
         items={[
@@ -154,7 +152,7 @@ function SonaSection({ sonas }: { sonas: Sona[] }) {
     <Section title="Sonas">
       <div className="grid gap-3 sm:grid-cols-2">
         {sonas.map((sona) => (
-          <div className="rounded-lg border border-zinc-200 p-3" key={sona.id}>
+          <div className="rounded-lg border border-border p-3" key={sona.id}>
             <div className="flex items-center gap-3">
               {sona.images[0]?.image ? (
                 <BarqImage
@@ -164,11 +162,11 @@ function SonaSection({ sonas }: { sonas: Sona[] }) {
                   width={180}
                 />
               ) : (
-                <div className="size-14 rounded-lg bg-zinc-100" />
+                <div className="size-14 rounded-lg bg-muted" />
               )}
               <div>
-                <h3 className="font-semibold text-zinc-950">{sona.displayName}</h3>
-                <p className="text-sm text-zinc-500">
+                <h3 className="font-semibold">{sona.displayName}</h3>
+                <p className="text-sm text-muted-foreground">
                   {[sona.species?.displayName, sona.hasFursuit ? "Fursuit" : null]
                     .filter(Boolean)
                     .join(" / ")}
@@ -192,11 +190,11 @@ function KinksSection({ groups }: { groups: ReturnType<typeof groupKinksByCatego
       <div className="space-y-4">
         {groups.map((group) => (
           <div className="space-y-2" key={group.categoryName}>
-            <h3 className="text-sm font-semibold text-zinc-950">{group.categoryName}</h3>
+            <h3 className="text-sm font-semibold">{group.categoryName}</h3>
             <div className="flex flex-wrap gap-2">
               {group.kinks.map((profileKink) => (
                 <span
-                  className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700"
+                  className="rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground"
                   key={profileKink.kink.id}
                 >
                   {profileKink.kink.displayName}
@@ -216,22 +214,22 @@ function SocialsSection({ profile }: { profile: ProfileDetail }) {
   return (
     <Section title="Socials">
       {socials.length === 0 ? (
-        <p className="text-sm text-zinc-500">No socials listed.</p>
+        <p className="text-sm text-muted-foreground">No socials listed.</p>
       ) : (
         <div className="space-y-2">
           {socials.map((account) => (
-            <div className="rounded-lg border border-zinc-200 p-3" key={account.id}>
-              <p className="text-sm font-semibold text-zinc-950">{account.socialNetwork}</p>
+            <div className="rounded-lg border border-border p-3" key={account.id}>
+              <p className="text-sm font-semibold">{account.socialNetwork}</p>
               {canRenderSocialValue(account) ? (
                 account.url ? (
-                  <a className="text-sm text-orange-700 hover:underline" href={account.url}>
+                  <a className="text-sm text-primary hover:underline" href={account.url}>
                     {socialDisplayValue(account)}
                   </a>
                 ) : (
-                  <p className="text-sm text-zinc-600">{socialDisplayValue(account)}</p>
+                  <p className="text-sm text-foreground">{socialDisplayValue(account)}</p>
                 )
               ) : (
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-muted-foreground">
                   {visibilityLabel(account.accessPermission)}
                 </p>
               )}
@@ -253,7 +251,7 @@ function GroupsSection({ profile }: { profile: ProfileDetail }) {
     <Section title="Groups">
       <div className="space-y-2">
         {groups.map(({ group }) => (
-          <div className="flex items-center gap-3 rounded-lg border border-zinc-200 p-3" key={group.uuid}>
+          <div className="flex items-center gap-3 rounded-lg border border-border p-3" key={group.uuid}>
             {group.image ? (
               <BarqImage
                 alt={`${group.displayName} group image`}
@@ -262,11 +260,11 @@ function GroupsSection({ profile }: { profile: ProfileDetail }) {
                 width={160}
               />
             ) : (
-              <div className="size-12 rounded-lg bg-zinc-100" />
+              <div className="size-12 rounded-lg bg-muted" />
             )}
             <div>
-              <p className="text-sm font-semibold text-zinc-950">{group.displayName}</p>
-              {group.isVerified ? <p className="text-xs text-zinc-500">Verified</p> : null}
+              <p className="text-sm font-semibold">{group.displayName}</p>
+              {group.isVerified ? <p className="text-xs text-muted-foreground">Verified</p> : null}
             </div>
           </div>
         ))}
@@ -285,9 +283,9 @@ function EventsSection({ profile }: { profile: ProfileDetail }) {
     <Section title="Events">
       <div className="space-y-2">
         {events.map(({ event }) => (
-          <div className="rounded-lg border border-zinc-200 p-3" key={event.uuid}>
-            <p className="text-sm font-semibold text-zinc-950">{event.displayName}</p>
-            <p className="text-xs text-zinc-500">
+          <div className="rounded-lg border border-border p-3" key={event.uuid}>
+            <p className="text-sm font-semibold">{event.displayName}</p>
+            <p className="text-xs text-muted-foreground">
               {formatDate(event.eventBeginAt)} to {formatDate(event.eventEndAt)}
             </p>
           </div>
@@ -299,8 +297,8 @@ function EventsSection({ profile }: { profile: ProfileDetail }) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="space-y-4 rounded-xl border border-zinc-200 bg-white p-5">
-      <h2 className="text-lg font-semibold text-zinc-950">{title}</h2>
+    <section className="space-y-4 rounded-xl border border-border bg-card p-5 text-card-foreground">
+      <h2 className="text-lg font-semibold">{title}</h2>
       {children}
     </section>
   );
@@ -317,8 +315,8 @@ function DefinitionList({ items }: { items: Array<[string, string | undefined | 
     <dl className="grid gap-3 text-sm sm:grid-cols-2">
       {visibleItems.map(([label, value]) => (
         <div key={label}>
-          <dt className="font-medium text-zinc-500">{label}</dt>
-          <dd className="mt-1 text-zinc-800">{value}</dd>
+          <dt className="font-medium text-muted-foreground">{label}</dt>
+          <dd className="mt-1 text-foreground">{value}</dd>
         </div>
       ))}
     </dl>
@@ -334,7 +332,10 @@ function BadgeList({ values }: { values: Array<string | undefined | null> }) {
   return (
     <div className="flex flex-wrap gap-2">
       {visible.map((value) => (
-        <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700" key={value}>
+        <span
+          className="rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground"
+          key={value}
+        >
           {value}
         </span>
       ))}

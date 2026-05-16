@@ -44,10 +44,8 @@ export default async function FeedPage({
   return (
     <main className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6">
       <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-950">
-          Profiles
-        </h1>
-        <p className="text-sm text-zinc-500">
+        <h1 className="text-2xl font-semibold tracking-tight">Profiles</h1>
+        <p className="text-sm text-muted-foreground">
           {mode.toUpperCase()} discovery with URL-owned filters.
         </p>
       </div>
@@ -55,7 +53,7 @@ export default async function FeedPage({
       <FeedFiltersForm filters={filters} mode={mode} />
 
       {error ? (
-        <section className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
+        <section className="rounded-xl border border-destructive/30 bg-destructive/10 p-5 text-sm text-destructive">
           {error}
         </section>
       ) : (

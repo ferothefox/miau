@@ -48,17 +48,6 @@
     --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-button,
-input,
-select,
-textarea {
-    font: inherit;
-}
-
-img {
-    display: block;
-}
-
 :root {
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.141 0.005 285.823);
@@ -133,7 +122,7 @@ img {
         @apply border-border outline-ring/50;
     }
     body {
-        @apply bg-background text-foreground;
+        @apply bg-background text-foreground isolate;
     }
     button:not(:disabled),
     [role="button"]:not(:disabled) {

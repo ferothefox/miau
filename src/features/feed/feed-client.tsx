@@ -84,9 +84,11 @@ export function FeedClient({
 
   if (profiles.length === 0) {
     return (
-      <section className="rounded-xl border border-dashed border-zinc-300 bg-white p-10 text-center">
-        <h2 className="text-lg font-semibold text-zinc-950">No profiles found</h2>
-        <p className="mt-2 text-sm text-zinc-500">Adjust filters or switch feed mode.</p>
+      <section className="rounded-xl border border-dashed border-border bg-card p-10 text-center text-card-foreground">
+        <h2 className="text-lg font-semibold">No profiles found</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Adjust filters or switch feed mode.
+        </p>
       </section>
     );
   }
@@ -100,14 +102,14 @@ export function FeedClient({
       </div>
 
       <div ref={sentinelRef} className="flex min-h-16 items-center justify-center">
-        {loading ? <p className="text-sm text-zinc-500">Loading more...</p> : null}
+        {loading ? <p className="text-sm text-muted-foreground">Loading more...</p> : null}
         {!hasMore && !loading ? (
-          <p className="text-sm text-zinc-500">End of feed</p>
+          <p className="text-sm text-muted-foreground">End of feed</p>
         ) : null}
       </div>
 
       {error ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </div>
       ) : null}

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { Place } from "@/domain/barq/types";
 
 export type SelectedLocation = {
@@ -58,8 +60,7 @@ export function LocationAutocomplete({
 
   return (
     <div className="relative">
-      <input
-        className="h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-950 outline-none transition focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+      <Input
         placeholder="Search city or place"
         type="search"
         value={query}
@@ -70,9 +71,9 @@ export function LocationAutocomplete({
         }}
       />
       {(places.length > 0 || loading) && (
-        <div className="absolute left-0 right-0 top-11 z-20 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-xl">
+        <div className="absolute z-[120] mt-2 grid w-full gap-1 bg-popover p-1">
           {loading ? (
-            <p className="px-3 py-2 text-sm text-zinc-500">Searching...</p>
+            <p className="text-sm text-muted-foreground">Searching...</p>
           ) : (
             places.slice(0, 8).map((place) => {
               const label = [place.place, place.region, place.countryCode]
@@ -80,10 +81,10 @@ export function LocationAutocomplete({
                 .join(", ");
 
               return (
-                <button
-                  className="block w-full px-3 py-2 text-left text-sm text-zinc-800 transition hover:bg-orange-50"
+                <Button
                   key={place.id}
                   type="button"
+                  variant="ghost"
                   onClick={() => {
                     selectedLabel.current = label;
                     setQuery(label);
@@ -96,7 +97,7 @@ export function LocationAutocomplete({
                   }}
                 >
                   {label}
-                </button>
+                </Button>
               );
             })
           )}
