@@ -197,7 +197,7 @@ export function LocationAutocomplete({
         <BaseCombobox.Input
           autoFocus={autoFocus}
           id={id}
-          className="inline h-[1em] max-w-full appearance-none border-0 bg-transparent p-0 font-[inherit] leading-[inherit] [field-sizing:content] [letter-spacing:inherit] text-primary underline decoration-primary/30 decoration-2 underline-offset-4 outline-none placeholder:text-primary/45 focus-visible:ring-0"
+          className="inline [field-sizing:content] h-[1em] max-w-full appearance-none border-0 bg-transparent p-0 font-[inherit] leading-[inherit] [letter-spacing:inherit] text-primary underline decoration-primary/30 decoration-2 underline-offset-4 outline-none placeholder:text-primary/45 focus-visible:ring-0"
           onBlur={() => {
             window.setTimeout(() => {
               if (!popupPointerDownRef.current) {
