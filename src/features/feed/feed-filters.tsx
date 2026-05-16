@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IconAdjustmentsHorizontal, IconSearch } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
@@ -59,6 +59,8 @@ const RADII = [
   { label: "250 mi", value: "250mi" },
 ] as const;
 
+const FILTER_ROW_COUNT = 5;
+const FILTER_EXIT_MS = 430;
 const LIVE_FILTER_DELAY_MS = 300;
 type LocationSource = "implicit" | "explicit" | "unset";
 
@@ -76,6 +78,13 @@ export function FeedFiltersForm({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filtersMounted, setFiltersMounted] = useState(false);
+  const [filtersAnimatingOpen, setFiltersAnimatingOpen] = useState(false);
+  const [filterPanelHeight, setFilterPanelHeight] = useState("0px");
+  const filterFrameRef = useRef(0);
+  const filterPanelRef = useRef<HTMLDivElement | null>(null);
+  const filterPanelContentRef = useRef<HTMLDivElement | null>(null);
+  const filterUnmountTimerRef = useRef(0);
   const [locationEditing, setLocationEditing] = useState(false);
   const [draftMode, setDraftMode] = useState(mode);
   const [location, setLocation] = useState<SelectedLocation | null>(
@@ -163,9 +172,59 @@ export function FeedFiltersForm({
     return () => window.clearTimeout(timer);
   }, [currentSearchParams, nextSearchParams, router]);
 
+  useEffect(() => {
+    return () => {
+      if (filterFrameRef.current) {
+        window.cancelAnimationFrame(filterFrameRef.current);
+      }
+      if (filterUnmountTimerRef.current) {
+        window.clearTimeout(filterUnmountTimerRef.current);
+      }
+    };
+  }, []);
+
+  function setFilterPanelOpen(open: boolean) {
+    if (filterFrameRef.current) {
+      window.cancelAnimationFrame(filterFrameRef.current);
+      filterFrameRef.current = 0;
+    }
+    if (filterUnmountTimerRef.current) {
+      window.clearTimeout(filterUnmountTimerRef.current);
+      filterUnmountTimerRef.current = 0;
+    }
+
+    setFiltersOpen(open);
+
+    if (open) {
+      setFiltersMounted(true);
+      setFiltersAnimatingOpen(false);
+      setFilterPanelHeight(`${filterPanelRef.current?.offsetHeight ?? 0}px`);
+      filterFrameRef.current = window.requestAnimationFrame(() => {
+        setFilterPanelHeight(
+          `${filterPanelContentRef.current?.scrollHeight ?? 0}px`,
+        );
+        setFiltersAnimatingOpen(true);
+        filterFrameRef.current = 0;
+      });
+      return;
+    }
+
+    setFilterPanelHeight(`${filterPanelRef.current?.offsetHeight ?? 0}px`);
+    setFiltersAnimatingOpen(false);
+    filterFrameRef.current = window.requestAnimationFrame(() => {
+      setFilterPanelHeight("0px");
+      filterFrameRef.current = 0;
+    });
+    filterUnmountTimerRef.current = window.setTimeout(() => {
+      setFiltersMounted(false);
+      setFilterPanelHeight("0px");
+      filterUnmountTimerRef.current = 0;
+    }, FILTER_EXIT_MS);
+  }
+
   return (
-    <section className="grid gap-5">
-      <div className="grid gap-5">
+    <section>
+      <div>
         <h1 className="max-w-4xl text-4xl leading-[1.05] font-bold tracking-tight text-balance sm:text-5xl">
           <span className="block">Hi {viewerName}!</span>
           <span className="block">
@@ -202,7 +261,7 @@ export function FeedFiltersForm({
         </h1>
       </div>
 
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <InputGroup className="h-11 bg-background/70 lg:max-w-md [&>input]:pr-3 [&>input]:pl-2">
           <InputGroupAddon align="inline-start" className="pl-3">
             <IconSearch className="size-5" />
@@ -238,7 +297,7 @@ export function FeedFiltersForm({
             size="lg"
             type="button"
             variant="secondary"
-            onClick={() => setFiltersOpen((open) => !open)}
+            onClick={() => setFilterPanelOpen(!filtersOpen)}
           >
             <IconAdjustmentsHorizontal
               className="size-5"
@@ -249,107 +308,177 @@ export function FeedFiltersForm({
         </div>
       </div>
 
-      {filtersOpen ? (
-        <ItemGroup className="gap-0 divide-y divide-border/70">
-          <FilterItem title="Gender">
-            {GENDERS.map((gender) => (
-              <ToggleButton
-                key={gender}
-                active={genders.includes(gender)}
-                onClick={() =>
-                  setGenders((values) =>
-                    toggleListValue(values, gender, !values.includes(gender)),
-                  )
-                }
-              >
-                {gender}
-              </ToggleButton>
-            ))}
-          </FilterItem>
+      {filtersMounted ? (
+        <div
+          ref={filterPanelRef}
+          aria-hidden={!filtersOpen}
+          data-state={filtersAnimatingOpen ? "open" : "closed"}
+          className="overflow-hidden transition-[height,opacity] duration-[380ms] ease-[cubic-bezier(0.16,1,0.3,1)] data-[state=closed]:pointer-events-none data-[state=closed]:opacity-0 data-[state=open]:opacity-100 motion-reduce:transition-none"
+          style={{ height: filterPanelHeight }}
+          onTransitionEnd={(event) => {
+            if (event.target !== event.currentTarget) {
+              return;
+            }
 
-          <FilterItem title="Relationship">
-            {RELATIONSHIPS.map(([value, label]) => (
-              <ToggleButton
-                key={value}
-                active={relationshipStatus.includes(value)}
-                onClick={() =>
-                  setRelationshipStatus((values) =>
-                    toggleListValue(values, value, !values.includes(value)),
-                  )
-                }
-              >
-                {label}
-              </ToggleButton>
-            ))}
-          </FilterItem>
+            if (event.propertyName !== "height") {
+              return;
+            }
 
-          <FilterItem title="Age">
-            <InputGroup className="h-7 w-24">
-              <InputGroupAddon align="inline-start" className="py-0">
-                <InputGroupText className="text-[0.8rem]">Min</InputGroupText>
-              </InputGroupAddon>
-              <InputGroupInput
-                aria-label="Minimum age"
-                className="h-7 text-[0.8rem] md:text-[0.8rem]"
-                min={18}
-                type="number"
-                value={ageMin}
-                onChange={(event) => setAgeMin(event.target.value)}
-              />
-            </InputGroup>
-            <span className="flex h-7 items-center text-sm text-muted-foreground">
-              to
-            </span>
-            <InputGroup className="h-7 w-24">
-              <InputGroupAddon align="inline-start" className="py-0">
-                <InputGroupText className="text-[0.8rem]">Max</InputGroupText>
-              </InputGroupAddon>
-              <InputGroupInput
-                aria-label="Maximum age"
-                className="h-7 text-[0.8rem] md:text-[0.8rem]"
-                min={18}
-                type="number"
-                value={ageMax}
-                onChange={(event) => setAgeMax(event.target.value)}
-              />
-            </InputGroup>
-          </FilterItem>
+            if (filtersOpen) {
+              return;
+            }
 
-          <FilterItem title="Scope">
-            {LOCATION_SCOPES.map((option) => (
-              <ToggleButton
-                key={option.value}
-                active={scope === option.value}
-                onClick={() => {
-                  setScope(option.value);
-                  setLocationSource((source) =>
-                    source === "implicit" ? "explicit" : source,
-                  );
-                }}
+            if (filterUnmountTimerRef.current) {
+              window.clearTimeout(filterUnmountTimerRef.current);
+              filterUnmountTimerRef.current = 0;
+            }
+            setFiltersMounted(false);
+            setFilterPanelHeight("0px");
+          }}
+        >
+          <div
+            ref={filterPanelContentRef}
+            className="min-h-0 overflow-hidden pt-5"
+          >
+            <ItemGroup className="gap-0 divide-y divide-border/70">
+              <FilterItem
+                index={0}
+                open={filtersAnimatingOpen}
+                phase={filterItemPhase(filtersOpen, filtersAnimatingOpen)}
+                title="Gender"
               >
-                {option.label}
-              </ToggleButton>
-            ))}
-          </FilterItem>
+                {GENDERS.map((gender) => (
+                  <ToggleButton
+                    key={gender}
+                    active={genders.includes(gender)}
+                    onClick={() =>
+                      setGenders((values) =>
+                        toggleListValue(
+                          values,
+                          gender,
+                          !values.includes(gender),
+                        ),
+                      )
+                    }
+                  >
+                    {gender}
+                  </ToggleButton>
+                ))}
+              </FilterItem>
 
-          <FilterItem title="Radius">
-            {RADII.map((option) => (
-              <ToggleButton
-                key={option.value}
-                active={radius === option.value}
-                disabled={scope !== "distance"}
-                onClick={() => {
-                  setRadius(option.value);
-                  setLocationSource((source) =>
-                    source === "implicit" ? "explicit" : source,
-                  );
-                }}
+              <FilterItem
+                index={1}
+                open={filtersAnimatingOpen}
+                phase={filterItemPhase(filtersOpen, filtersAnimatingOpen)}
+                title="Relationship"
               >
-                {option.label}
-              </ToggleButton>
-            ))}
-          </FilterItem>
-        </ItemGroup>
+                {RELATIONSHIPS.map(([value, label]) => (
+                  <ToggleButton
+                    key={value}
+                    active={relationshipStatus.includes(value)}
+                    onClick={() =>
+                      setRelationshipStatus((values) =>
+                        toggleListValue(
+                          values,
+                          value,
+                          !values.includes(value),
+                        ),
+                      )
+                    }
+                  >
+                    {label}
+                  </ToggleButton>
+                ))}
+              </FilterItem>
+
+              <FilterItem
+                index={2}
+                open={filtersAnimatingOpen}
+                phase={filterItemPhase(filtersOpen, filtersAnimatingOpen)}
+                title="Age"
+              >
+                <InputGroup className="h-7 w-24">
+                  <InputGroupAddon align="inline-start" className="py-0">
+                    <InputGroupText className="text-[0.8rem]">
+                      Min
+                    </InputGroupText>
+                  </InputGroupAddon>
+                  <InputGroupInput
+                    aria-label="Minimum age"
+                    className="h-7 text-[0.8rem] md:text-[0.8rem]"
+                    min={18}
+                    type="number"
+                    value={ageMin}
+                    onChange={(event) => setAgeMin(event.target.value)}
+                  />
+                </InputGroup>
+                <span className="flex h-7 items-center text-sm text-muted-foreground">
+                  to
+                </span>
+                <InputGroup className="h-7 w-24">
+                  <InputGroupAddon align="inline-start" className="py-0">
+                    <InputGroupText className="text-[0.8rem]">
+                      Max
+                    </InputGroupText>
+                  </InputGroupAddon>
+                  <InputGroupInput
+                    aria-label="Maximum age"
+                    className="h-7 text-[0.8rem] md:text-[0.8rem]"
+                    min={18}
+                    type="number"
+                    value={ageMax}
+                    onChange={(event) => setAgeMax(event.target.value)}
+                  />
+                </InputGroup>
+              </FilterItem>
+
+              <FilterItem
+                index={3}
+                open={filtersAnimatingOpen}
+                phase={filterItemPhase(filtersOpen, filtersAnimatingOpen)}
+                title="Scope"
+              >
+                {LOCATION_SCOPES.map((option) => (
+                  <ToggleButton
+                    key={option.value}
+                    active={scope === option.value}
+                    onClick={() => {
+                      setScope(option.value);
+                      setLocationSource((source) =>
+                        source === "implicit" ? "explicit" : source,
+                      );
+                    }}
+                  >
+                    {option.label}
+                  </ToggleButton>
+                ))}
+              </FilterItem>
+
+              <FilterItem
+                index={4}
+                open={filtersAnimatingOpen}
+                phase={filterItemPhase(filtersOpen, filtersAnimatingOpen)}
+                title="Radius"
+              >
+                {RADII.map((option) => (
+                  <ToggleButton
+                    key={option.value}
+                    active={radius === option.value}
+                    disabled={scope !== "distance"}
+                    onClick={() => {
+                      setRadius(option.value);
+                      setLocationSource((source) =>
+                        source === "implicit" ? "explicit" : source,
+                      );
+                    }}
+                  >
+                    {option.label}
+                  </ToggleButton>
+                ))}
+              </FilterItem>
+            </ItemGroup>
+          </div>
+        </div>
       ) : null}
     </section>
   );
@@ -358,14 +487,32 @@ export function FeedFiltersForm({
 function FilterItem({
   children,
   description,
+  index,
+  open,
+  phase,
   title,
 }: {
   children: ReactNode;
   description?: string;
+  index: number;
+  open: boolean;
+  phase: "closing" | "open" | "opening";
   title: string;
 }) {
+  const delay = open ? 55 + index * 34 : (FILTER_ROW_COUNT - index - 1) * 22;
+
   return (
-    <Item className="flex-col items-start rounded-none border-0 px-0 py-4 sm:flex-row">
+    <Item
+      data-state={phase}
+      style={{
+        transitionDelay: `${delay}ms`,
+        transitionDuration: open ? "520ms" : "230ms",
+        transitionTimingFunction: open
+          ? "cubic-bezier(0.16, 1, 0.3, 1)"
+          : "cubic-bezier(0.4, 0, 1, 1)",
+      }}
+      className="flex-col items-start rounded-none border-0 px-0 py-4 transition-[opacity,transform] will-change-transform data-[state=closing]:translate-y-0 data-[state=closing]:opacity-0 data-[state=open]:translate-y-0 data-[state=open]:opacity-100 data-[state=opening]:translate-y-3 data-[state=opening]:opacity-0 motion-reduce:transition-none sm:flex-row"
+    >
       <ItemContent className="w-full sm:w-64 sm:flex-none">
         <ItemTitle>{title}</ItemTitle>
         {description ? <ItemDescription>{description}</ItemDescription> : null}
@@ -375,6 +522,17 @@ function FilterItem({
       </ItemActions>
     </Item>
   );
+}
+
+function filterItemPhase(
+  open: boolean,
+  animatingOpen: boolean,
+): "closing" | "open" | "opening" {
+  if (animatingOpen) {
+    return "open";
+  }
+
+  return open ? "opening" : "closing";
 }
 
 function ToggleButton({
