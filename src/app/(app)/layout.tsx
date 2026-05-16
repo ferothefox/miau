@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { Button } from "@/components/ui/button";
 import { choosePrimaryImage } from "@/domain/barq/images";
 import { normalizeProfileDetail } from "@/domain/barq/normalize";
 import { UserMenu } from "@/features/auth/user-menu";
-import { user } from "@/server/barq/operations";
+import { getViewerUser, preloadViewerUser } from "@/server/barq/cached";
 import { redirectToLoginOnAuthFailure } from "@/server/barq/redirects";
 import { requireSession } from "@/server/session";
 
@@ -12,9 +14,7 @@ export default async function AppLayout({
   children: React.ReactNode;
 }>) {
   const session = await requireSession();
-  const viewer = await user(session.token).catch(redirectToLoginOnAuthFailure);
-  const profile = normalizeProfileDetail(viewer.user.profile);
-  const profileImage = choosePrimaryImage(profile, "sfw");
+  preloadViewerUser(session.token);
 
   return (
     <div className="min-h-dvh bg-background text-foreground">
@@ -40,16 +40,38 @@ export default async function AppLayout({
             >
               Feed
             </Link>
-            <UserMenu
-              displayName={profile.displayName}
-              image={profileImage}
-              username={profile.username}
-              uuid={profile.uuid}
-            />
+            <Suspense
+              fallback={
+                <Button
+                  aria-label="Open account menu"
+                  className="rounded-full"
+                  disabled
+                  size="icon-lg"
+                  variant="outline"
+                />
+              }
+            >
+              <ViewerMenu token={session.token} />
+            </Suspense>
           </nav>
         </div>
       </header>
       {children}
     </div>
+  );
+}
+
+async function ViewerMenu({ token }: { token: string }) {
+  const viewer = await getViewerUser(token).catch(redirectToLoginOnAuthFailure);
+  const profile = normalizeProfileDetail(viewer.user.profile);
+  const profileImage = choosePrimaryImage(profile, "sfw");
+
+  return (
+    <UserMenu
+      displayName={profile.displayName}
+      image={profileImage}
+      username={profile.username}
+      uuid={profile.uuid}
+    />
   );
 }

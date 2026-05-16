@@ -19,7 +19,10 @@ import type {
   FeedLocationScope,
   FeedMode,
 } from "@/domain/barq/types";
-import { filtersToSearchParams } from "@/domain/barq/filters";
+import {
+  filtersToSearchParams,
+  NO_LOCATION_FILTER_LABEL,
+} from "@/domain/barq/filters";
 import {
   LocationAutocomplete,
   type SelectedLocation,
@@ -61,11 +64,14 @@ const RADII = [
 ] as const;
 
 const LIVE_FILTER_DELAY_MS = 300;
+type LocationSource = "implicit" | "explicit" | "cleared" | "unset";
 
 export function FeedFiltersForm({
+  isDefaultLocationImplicit = false,
   mode,
   filters,
 }: {
+  isDefaultLocationImplicit?: boolean;
   mode: FeedMode;
   filters: FeedFilters;
 }) {
@@ -81,6 +87,15 @@ export function FeedFiltersForm({
         }
       : null,
   );
+  const [locationSource, setLocationSource] = useState<LocationSource>(() => {
+    if (filters.location) {
+      return isDefaultLocationImplicit ? "implicit" : "explicit";
+    }
+
+    return filters.locationLabel === NO_LOCATION_FILTER_LABEL
+      ? "cleared"
+      : "unset";
+  });
   const [displayName, setDisplayName] = useState(filters.displayName ?? "");
   const [ageMin, setAgeMin] = useState(
     filters.ageMin === undefined ? "" : String(filters.ageMin),
@@ -115,6 +130,7 @@ export function FeedFiltersForm({
         radius,
         relationshipStatus,
         requireProfileImage,
+        source: locationSource,
         scope,
         sexPositions,
       }),
@@ -127,13 +143,19 @@ export function FeedFiltersForm({
       radius,
       relationshipStatus,
       requireProfileImage,
+      locationSource,
       scope,
       sexPositions,
     ],
   );
   const nextSearchParams = useMemo(
-    () => filtersToSearchParams(draftMode, nextFilters).toString(),
-    [draftMode, nextFilters],
+    () =>
+      filtersToSearchParams(draftMode, nextFilters, {
+        clearedLocation: locationSource === "cleared",
+        includeDefaultMode: false,
+        includeImplicitLocation: locationSource !== "implicit",
+      }).toString(),
+    [draftMode, locationSource, nextFilters],
   );
   const currentSearchParams = searchParams.toString();
 
@@ -143,7 +165,7 @@ export function FeedFiltersForm({
     }
 
     const timer = window.setTimeout(() => {
-      router.replace(`/feed?${nextSearchParams}`, { scroll: false });
+      router.replace(feedHref(nextSearchParams), { scroll: false });
     }, LIVE_FILTER_DELAY_MS);
 
     return () => window.clearTimeout(timer);
@@ -212,7 +234,10 @@ export function FeedFiltersForm({
           <Label>Location</Label>
           <LocationAutocomplete
             initialLocation={location ?? undefined}
-            onSelect={setLocation}
+            onSelect={(nextLocation) => {
+              setLocation(nextLocation);
+              setLocationSource(nextLocation ? "explicit" : "cleared");
+            }}
           />
         </div>
         <div className="grid gap-2">
@@ -224,6 +249,9 @@ export function FeedFiltersForm({
             onValueChange={(value) => {
               if (isLocationScope(value)) {
                 setScope(value);
+                setLocationSource((source) =>
+                  source === "implicit" ? "explicit" : source,
+                );
               }
             }}
           >
@@ -250,6 +278,9 @@ export function FeedFiltersForm({
             onValueChange={(value) => {
               if (isRadius(value)) {
                 setRadius(value);
+                setLocationSource((source) =>
+                  source === "implicit" ? "explicit" : source,
+                );
               }
             }}
           >
@@ -350,6 +381,7 @@ function buildFilters({
   radius,
   relationshipStatus,
   requireProfileImage,
+  source,
   scope,
   sexPositions,
 }: {
@@ -361,6 +393,7 @@ function buildFilters({
   radius: "infinite" | "100mi" | "250mi";
   relationshipStatus: string[];
   requireProfileImage: boolean;
+  source: LocationSource;
   scope: FeedLocationScope;
   sexPositions: string[];
 }): FeedFilters {
@@ -381,9 +414,15 @@ function buildFilters({
             radius === "100mi" ? 161 : radius === "250mi" ? 402 : undefined,
         }
       : undefined,
-    locationLabel: location?.label,
+    locationLabel:
+      location?.label ??
+      (source === "cleared" ? NO_LOCATION_FILTER_LABEL : undefined),
     radius: radius === "100mi" || radius === "250mi" ? radius : "infinite",
   };
+}
+
+function feedHref(searchParams: string): string {
+  return searchParams ? `/feed?${searchParams}` : "/feed";
 }
 
 function formNumber(value: string): number | undefined {

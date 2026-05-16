@@ -8,6 +8,7 @@ import {
   filtersToSearchParams,
   nextCursor,
   parseFeedFilters,
+  shouldUseDefaultFeedLocation,
   toProfileSearchVariables,
 } from "./filters";
 import { chooseHeaderImage, choosePrimaryImage, imageUrl } from "./images";
@@ -169,6 +170,69 @@ describe("feed filters", () => {
       distanceKm: undefined,
     });
     expect(filters.radius).toBe("infinite");
+  });
+
+  test("keeps implicit default location out of feed URLs", () => {
+    const params = filtersToSearchParams(
+      "sfw",
+      {
+        locationLabel: "Tempe, Arizona, US",
+        radius: "infinite",
+        location: {
+          latitude: 33.4144,
+          longitude: -111.9094,
+          type: "distance",
+        },
+      },
+      {
+        includeDefaultMode: false,
+        includeImplicitLocation: false,
+      },
+    );
+
+    expect(params.toString()).toBe("");
+  });
+
+  test("does not default feed location after an explicit cleared location", () => {
+    const params = { mode: "sfw", location: "Anywhere" };
+    const filters = applyDefaultFeedLocation(
+      parseFeedFilters(params),
+      {
+        type: "gps",
+        distance: null,
+        precision: null,
+        homePlace: null,
+        place: {
+          id: "3035",
+          place: "Tempe",
+          region: "Arizona",
+          country: "United States",
+          countryCode: "US",
+          longitude: -111.9094,
+          latitude: 33.4144,
+          __typename: "Place",
+        },
+        __typename: "ProfileLocation",
+      },
+      { enabled: shouldUseDefaultFeedLocation(params) },
+    );
+
+    expect(shouldUseDefaultFeedLocation(params)).toBe(false);
+    expect(filters.location).toBe(undefined);
+    expect(filters.locationLabel).toBe("Anywhere");
+  });
+
+  test("serializes explicit cleared location without default mode", () => {
+    const params = filtersToSearchParams(
+      "sfw",
+      { locationLabel: "Anywhere" },
+      {
+        clearedLocation: true,
+        includeDefaultMode: false,
+      },
+    );
+
+    expect(params.toString()).toBe("location=Anywhere");
   });
 });
 

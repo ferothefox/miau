@@ -199,6 +199,19 @@ function ComboboxEmpty({ className, ...props }: ComboboxPrimitive.Empty.Props) {
   )
 }
 
+function ComboboxStatus({
+  className,
+  ...props
+}: ComboboxPrimitive.Status.Props) {
+  return (
+    <ComboboxPrimitive.Status
+      data-slot="combobox-status"
+      className={cn(className)}
+      {...props}
+    />
+  )
+}
+
 function ComboboxSeparator({
   className,
   ...props
@@ -287,6 +300,7 @@ export {
   ComboboxLabel,
   ComboboxCollection,
   ComboboxEmpty,
+  ComboboxStatus,
   ComboboxSeparator,
   ComboboxChips,
   ComboboxChip,

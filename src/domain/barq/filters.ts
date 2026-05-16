@@ -13,6 +13,7 @@ export type SearchParamValue = string | string[] | undefined;
 export type SearchParamRecord = Record<string, SearchParamValue>;
 
 export const FEED_MODES = ["sfw", "nsfw"] as const;
+export const NO_LOCATION_FILTER_LABEL = "Anywhere";
 
 const LOCATION_SCOPES = ["distance", "city", "region", "country"] as const;
 
@@ -128,13 +129,24 @@ export function parseFeedFilters(searchParams: SearchParamRecord): FeedFilters {
   return normalizeFeedFilters(filters);
 }
 
+export function shouldUseDefaultFeedLocation(
+  searchParams: SearchParamRecord,
+): boolean {
+  return (
+    cleanString(searchParams.location) === undefined &&
+    parseNumber(searchParams.lat) === undefined &&
+    parseNumber(searchParams.lng) === undefined
+  );
+}
+
 export function applyDefaultFeedLocation(
   filters: FeedFilters,
   profileLocation: ProfileLocation | null | undefined,
+  options: { enabled?: boolean } = {},
 ): FeedFilters {
   const normalized = normalizeFeedFilters(filters);
 
-  if (normalized.location) {
+  if (options.enabled === false || normalized.location) {
     return normalized;
   }
 
@@ -268,13 +280,20 @@ export function toProfileSearchVariables({
 export function filtersToSearchParams(
   mode: FeedMode,
   filters: FeedFilters,
+  options: {
+    clearedLocation?: boolean;
+    includeDefaultMode?: boolean;
+    includeImplicitLocation?: boolean;
+  } = {},
 ): URLSearchParams {
   const normalized = normalizeFeedFilters(filters);
   const params = new URLSearchParams();
 
-  params.set("mode", mode);
+  if (mode !== "sfw" || options.includeDefaultMode !== false) {
+    params.set("mode", mode);
+  }
+
   setParam(params, "displayName", normalized.displayName);
-  setParam(params, "location", normalized.locationLabel);
   setParam(params, "ageMin", normalized.ageMin);
   setParam(params, "ageMax", normalized.ageMax);
   setParam(params, "genders", normalized.genders);
@@ -285,7 +304,13 @@ export function filtersToSearchParams(
     params.set("requireProfileImage", "1");
   }
 
-  if (normalized.location) {
+  if (options.clearedLocation) {
+    params.set("location", NO_LOCATION_FILTER_LABEL);
+  } else if (
+    normalized.location &&
+    options.includeImplicitLocation !== false
+  ) {
+    setParam(params, "location", normalized.locationLabel);
     params.set("lat", String(normalized.location.latitude));
     params.set("lng", String(normalized.location.longitude));
     params.set("scope", normalized.location.type);
