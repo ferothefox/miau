@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { IconSearch } from "@tabler/icons-react";
+import { IconAdjustmentsHorizontal, IconSearch } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import {
   InputGroup,
@@ -165,11 +165,11 @@ export function FeedFiltersForm({
 
   return (
     <section className="grid gap-5">
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+      <div className="grid gap-5">
         <h1 className="max-w-4xl text-4xl leading-[1.05] font-bold tracking-tight text-balance sm:text-5xl">
           <span className="block">Hi {viewerName}!</span>
           <span className="block">
-            You&apos;re in {""}
+            You&apos;re in{" "}
             <span className="inline align-baseline">
               {locationEditing ? (
                 <LocationAutocomplete
@@ -200,13 +200,16 @@ export function FeedFiltersForm({
             </span>
           </span>
         </h1>
+      </div>
 
-        <InputGroup className="h-10 bg-background/70 lg:mt-1 lg:w-80">
-          <InputGroupAddon align="inline-start">
-            <IconSearch className="size-4" />
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <InputGroup className="h-11 bg-background/70 lg:max-w-md [&>input]:pr-3 [&>input]:pl-2">
+          <InputGroupAddon align="inline-start" className="pl-3">
+            <IconSearch className="size-5" />
           </InputGroupAddon>
           <InputGroupInput
             aria-label="Search by display name"
+            className="text-base md:text-base"
             name="displayName"
             placeholder="Find anyone"
             type="search"
@@ -214,13 +217,13 @@ export function FeedFiltersForm({
             onChange={(event) => setDisplayName(event.target.value)}
           />
         </InputGroup>
-      </div>
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {(["sfw", "nsfw"] as const).map((value) => (
             <Button
               key={value}
+              className="h-11 px-4 text-base"
+              size="lg"
               type="button"
               variant={draftMode === value ? "default" : "outline"}
               aria-pressed={draftMode === value}
@@ -229,23 +232,26 @@ export function FeedFiltersForm({
               {value.toUpperCase()}
             </Button>
           ))}
+          <Button
+            aria-expanded={filtersOpen}
+            className="h-11 gap-2 px-4 text-base has-data-[icon=inline-start]:pr-4 has-data-[icon=inline-start]:pl-3.5"
+            size="lg"
+            type="button"
+            variant="secondary"
+            onClick={() => setFiltersOpen((open) => !open)}
+          >
+            <IconAdjustmentsHorizontal
+              className="size-5"
+              data-icon="inline-start"
+            />
+            Filter out the fluff
+          </Button>
         </div>
-        <button
-          aria-expanded={filtersOpen}
-          className="text-sm font-medium text-muted-foreground underline underline-offset-4 transition hover:text-foreground"
-          type="button"
-          onClick={() => setFiltersOpen((open) => !open)}
-        >
-          Filter out the fluff
-        </button>
       </div>
 
       {filtersOpen ? (
         <ItemGroup className="gap-0 divide-y divide-border/70">
-          <FilterItem
-            description="Choose who appears in your feed."
-            title="Gender"
-          >
+          <FilterItem title="Gender">
             {GENDERS.map((gender) => (
               <ToggleButton
                 key={gender}
@@ -261,10 +267,7 @@ export function FeedFiltersForm({
             ))}
           </FilterItem>
 
-          <FilterItem
-            description="Match the kind of availability you want to see."
-            title="Relationship"
-          >
+          <FilterItem title="Relationship">
             {RELATIONSHIPS.map(([value, label]) => (
               <ToggleButton
                 key={value}
@@ -280,28 +283,30 @@ export function FeedFiltersForm({
             ))}
           </FilterItem>
 
-          <FilterItem description="Keep results in a useful range." title="Age">
-            <InputGroup className="w-28">
-              <InputGroupAddon align="inline-start">
-                <InputGroupText>Min</InputGroupText>
+          <FilterItem title="Age">
+            <InputGroup className="h-7 w-24">
+              <InputGroupAddon align="inline-start" className="py-0">
+                <InputGroupText className="text-[0.8rem]">Min</InputGroupText>
               </InputGroupAddon>
               <InputGroupInput
                 aria-label="Minimum age"
+                className="h-7 text-[0.8rem] md:text-[0.8rem]"
                 min={18}
                 type="number"
                 value={ageMin}
                 onChange={(event) => setAgeMin(event.target.value)}
               />
             </InputGroup>
-            <span className="flex h-8 items-center text-sm text-muted-foreground">
+            <span className="flex h-7 items-center text-sm text-muted-foreground">
               to
             </span>
-            <InputGroup className="w-28">
-              <InputGroupAddon align="inline-start">
-                <InputGroupText>Max</InputGroupText>
+            <InputGroup className="h-7 w-24">
+              <InputGroupAddon align="inline-start" className="py-0">
+                <InputGroupText className="text-[0.8rem]">Max</InputGroupText>
               </InputGroupAddon>
               <InputGroupInput
                 aria-label="Maximum age"
+                className="h-7 text-[0.8rem] md:text-[0.8rem]"
                 min={18}
                 type="number"
                 value={ageMax}
@@ -310,10 +315,7 @@ export function FeedFiltersForm({
             </InputGroup>
           </FilterItem>
 
-          <FilterItem
-            description="Decide how tightly location should match."
-            title="Scope"
-          >
+          <FilterItem title="Scope">
             {LOCATION_SCOPES.map((option) => (
               <ToggleButton
                 key={option.value}
@@ -330,10 +332,7 @@ export function FeedFiltersForm({
             ))}
           </FilterItem>
 
-          <FilterItem
-            description="Only applies when scope is distance."
-            title="Radius"
-          >
+          <FilterItem title="Radius">
             {RADII.map((option) => (
               <ToggleButton
                 key={option.value}
@@ -362,14 +361,14 @@ function FilterItem({
   title,
 }: {
   children: ReactNode;
-  description: string;
+  description?: string;
   title: string;
 }) {
   return (
     <Item className="flex-col items-start rounded-none border-0 px-0 py-4 sm:flex-row">
       <ItemContent className="w-full sm:w-64 sm:flex-none">
         <ItemTitle>{title}</ItemTitle>
-        <ItemDescription>{description}</ItemDescription>
+        {description ? <ItemDescription>{description}</ItemDescription> : null}
       </ItemContent>
       <ItemActions className="flex w-full flex-wrap justify-start gap-2 sm:ml-auto sm:w-auto sm:flex-1 sm:justify-end">
         {children}

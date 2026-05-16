@@ -38,6 +38,7 @@ export function LocationAutocomplete({
 }) {
   const id = useId();
   const abortControllerRef = useRef<AbortController | null>(null);
+  const popupPointerDownRef = useRef(false);
   const initialOption = useMemo(
     () =>
       initialLocation ? optionFromSelectedLocation(initialLocation) : null,
@@ -96,7 +97,9 @@ export function LocationAutocomplete({
           return;
         }
 
-        onClose?.();
+        if (variant !== "inline") {
+          onClose?.();
+        }
 
         if (selectedValue) {
           setSearchResults([selectedValue]);
@@ -194,7 +197,19 @@ export function LocationAutocomplete({
         <BaseCombobox.Input
           autoFocus={autoFocus}
           id={id}
-          className="inline [field-sizing:content] h-[1em] max-w-full appearance-none border-0 bg-transparent p-0 font-[inherit] leading-[inherit] tracking-normal text-[inherit] text-primary underline decoration-primary/30 decoration-2 underline-offset-4 outline-none placeholder:text-primary/45 focus-visible:ring-0"
+          className="inline h-[1em] max-w-full appearance-none border-0 bg-transparent p-0 font-[inherit] leading-[inherit] [field-sizing:content] [letter-spacing:inherit] text-primary underline decoration-primary/30 decoration-2 underline-offset-4 outline-none placeholder:text-primary/45 focus-visible:ring-0"
+          onBlur={() => {
+            window.setTimeout(() => {
+              if (!popupPointerDownRef.current) {
+                onClose?.();
+              }
+            }, 0);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              onClose?.();
+            }
+          }}
           placeholder="Search city or place"
         />
       ) : (
@@ -207,7 +222,17 @@ export function LocationAutocomplete({
           showTrigger
         />
       )}
-      <ComboboxContent aria-busy={isPending || undefined}>
+      <ComboboxContent
+        aria-busy={isPending || undefined}
+        onPointerDownCapture={() => {
+          popupPointerDownRef.current = true;
+        }}
+        onPointerUpCapture={() => {
+          window.setTimeout(() => {
+            popupPointerDownRef.current = false;
+          }, 0);
+        }}
+      >
         {status ? (
           <ComboboxStatus className="px-1.5 py-1 text-sm text-muted-foreground">
             <span className="flex items-center gap-2">

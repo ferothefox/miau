@@ -51,7 +51,7 @@ export default async function ProfilePage({
   const location = locationLabel(profile);
 
   return (
-    <main className="mx-auto grid max-w-6xl gap-6 px-4 py-6 sm:px-6">
+    <main className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6">
       <section className="overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-sm">
         <div className="h-56 bg-muted sm:h-72">
           {headerImage ? (
