@@ -17,11 +17,7 @@ import {
 } from "@/domain/barq/filters";
 import { normalizeProfileDetail } from "@/domain/barq/normalize";
 import { toClientSafeMessage } from "@/server/barq/errors";
-import {
-  getProfileSearchPage,
-  getViewerUser,
-  stableFeedFiltersJson,
-} from "@/server/barq/cached";
+import { getProfileSearchPage, getViewerUser } from "@/server/barq/cached";
 import { redirectToLoginOnAuthFailure } from "@/server/barq/redirects";
 import { requireSession } from "@/server/session";
 import { FeedClient } from "@/features/feed/feed-client";
@@ -83,7 +79,6 @@ async function FeedGrid({
   token: string;
   viewerId?: number;
 }) {
-  const filtersJson = stableFeedFiltersJson(filters);
   const cacheKey = feedCacheKey(viewerId, mode, filters).join(":");
 
   let profiles: OverviewProfile[] = [];
@@ -93,7 +88,7 @@ async function FeedGrid({
     const data = await getProfileSearchPage(
       token,
       mode,
-      filtersJson,
+      filters,
       "",
       DEFAULT_PROFILE_LIMIT,
     );
@@ -119,6 +114,7 @@ async function FeedGrid({
       initialHasMore={profiles.length >= DEFAULT_PROFILE_LIMIT}
       initialProfiles={profiles}
       mode={mode}
+      viewerId={viewerId}
     />
   );
 }

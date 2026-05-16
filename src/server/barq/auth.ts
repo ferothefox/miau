@@ -5,7 +5,7 @@ import { normalizeNetworkError } from "./errors";
 const BARQ_API_ORIGIN = "https://api.barq.app";
 
 export async function requestEmailLoginCode(email: string): Promise<string> {
-  return postEmailAuth<string>("/account-provider/email/request-code", {
+  return postEmailAuthString("/account-provider/email/request-code", {
     email,
   });
 }
@@ -14,16 +14,16 @@ export async function loginWithEmailCode(
   email: string,
   code: string,
 ): Promise<string> {
-  return postEmailAuth<string>("/account-provider/email/login", {
+  return postEmailAuthString("/account-provider/email/login", {
     email,
     code,
   });
 }
 
-async function postEmailAuth<TResponse>(
+async function postEmailAuthString(
   path: string,
   body: object,
-): Promise<TResponse> {
+): Promise<string> {
   let response: Response;
 
   try {
@@ -46,9 +46,11 @@ async function postEmailAuth<TResponse>(
   }
 
   const text = await response.text();
+
   try {
-    return JSON.parse(text) as TResponse;
+    const parsed: unknown = JSON.parse(text);
+    return typeof parsed === "string" ? parsed : text;
   } catch {
-    return text as TResponse;
+    return text;
   }
 }

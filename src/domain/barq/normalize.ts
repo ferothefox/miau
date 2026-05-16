@@ -54,14 +54,20 @@ export function groupKinksByCategory(
 
   for (const profileKink of kinks ?? []) {
     const category = profileKink.kink.categoryName || "Other";
-    groups.set(category, [...(groups.get(category) ?? []), profileKink]);
+    const group = groups.get(category);
+
+    if (group) {
+      group.push(profileKink);
+    } else {
+      groups.set(category, [profileKink]);
+    }
   }
 
   return Array.from(groups.entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([categoryName, groupedKinks]) => ({
       categoryName,
-      kinks: groupedKinks.sort((a, b) =>
+      kinks: [...groupedKinks].sort((a, b) =>
         a.kink.displayName.localeCompare(b.kink.displayName),
       ),
     }));

@@ -12,6 +12,7 @@ import {
   ComboboxStatus,
 } from "@/components/ui/combobox";
 import type { Place } from "@/domain/barq/types";
+import { isRecord } from "@/lib/type-guards";
 
 export type SelectedLocation = {
   id?: string;
@@ -317,13 +318,15 @@ async function searchPlaces(
       return { places: [], error: "Could not search places." };
     }
 
-    const data = (await response.json()) as { places: Place[] };
+    const data: unknown = await response.json();
+    const places = isPlacesResponse(data) ? data.places : [];
+
     return {
-      places: data.places.slice(0, 8).map(optionFromPlace),
+      places: places.slice(0, 8).map(optionFromPlace),
       error: null,
     };
   } catch (error) {
-    if ((error as Error).name === "AbortError") {
+    if (error instanceof Error && error.name === "AbortError") {
       return { places: [], error: null };
     }
 
@@ -340,6 +343,28 @@ function optionFromPlace(place: Place): LocationOption {
     latitude: place.latitude,
     longitude: place.longitude,
   };
+}
+
+function isPlacesResponse(value: unknown): value is { places: Place[] } {
+  return (
+    isRecord(value) &&
+    Array.isArray(value.places) &&
+    value.places.every(isPlace)
+  );
+}
+
+function isPlace(value: unknown): value is Place {
+  return (
+    isRecord(value) &&
+    typeof value.id === "string" &&
+    typeof value.place === "string" &&
+    (typeof value.region === "string" || value.region === null) &&
+    typeof value.country === "string" &&
+    typeof value.countryCode === "string" &&
+    typeof value.longitude === "number" &&
+    typeof value.latitude === "number" &&
+    value.__typename === "Place"
+  );
 }
 
 function optionFromSelectedLocation(

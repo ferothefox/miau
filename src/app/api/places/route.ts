@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
+import { clearBarqReadCacheForToken, getPlaces } from "@/server/barq/cached";
 import { isBarqAuthError, toClientSafeMessage } from "@/server/barq/errors";
-import { places } from "@/server/barq/operations";
 import { clearSession, getSession } from "@/server/session";
 
 export async function GET(request: Request) {
@@ -15,10 +15,11 @@ export async function GET(request: Request) {
   }
 
   try {
-    const data = await places(session.token, { query });
+    const data = await getPlaces(session.token, query);
     return NextResponse.json({ places: data.places });
   } catch (error) {
     if (isBarqAuthError(error)) {
+      clearBarqReadCacheForToken(session.token);
       await clearSession();
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

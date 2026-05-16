@@ -1,14 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import {
   DEFAULT_PROFILE_LIMIT,
   type FeedFilters,
   type FeedMode,
   type OverviewProfile,
 } from "@/domain/barq/types";
+import { filtersToSearchParams } from "@/domain/barq/filters";
+import { isRecord } from "@/lib/type-guards";
 import { ProfileCard } from "./profile-card";
-import type { FeedPagePayload, FeedPageResponse } from "./types";
+import type { FeedPageResponse } from "./types";
+
+const feedPageCache = new Map<string, FeedPageResponse>();
+const MAX_FEED_PAGE_CACHE_SIZE = 48;
 
 export function FeedClient({
   initialProfiles,
@@ -16,12 +28,14 @@ export function FeedClient({
   initialHasMore,
   mode,
   filters,
+  viewerId,
 }: {
   initialProfiles: OverviewProfile[];
   initialCursor: string;
   initialHasMore: boolean;
   mode: FeedMode;
   filters: FeedFilters;
+  viewerId?: number;
 }) {
   const [profiles, setProfiles] = useState(initialProfiles);
   const [cursor, setCursor] = useState(initialCursor);
@@ -37,36 +51,34 @@ export function FeedClient({
     setLoading(true);
     setError(null);
 
-    const payload: FeedPagePayload = {
-      mode,
-      filters,
-      cursor,
-      limit: DEFAULT_PROFILE_LIMIT,
-    };
+    const pageUrl = feedPageUrl(mode, filters, cursor);
+    const cacheKey = viewerId === undefined ? null : `${viewerId}:${pageUrl}`;
+    const cachedPage = cacheKey ? feedPageCache.get(cacheKey) : undefined;
+
+    if (cachedPage) {
+      applyPage(cachedPage, setProfiles, setCursor, setHasMore);
+      setLoading(false);
+      return;
+    }
 
     try {
-      const response = await fetch("/api/feed", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      const response = await fetch(pageUrl);
 
       if (!response.ok) {
         throw new Error("Could not load more profiles.");
       }
 
-      const page = (await response.json()) as FeedPageResponse;
-      setProfiles((current) => mergeProfiles(current, page.profiles));
-      setCursor(page.cursor);
-      setHasMore(page.hasMore);
+      const page = await parseFeedPageResponse(response);
+      if (cacheKey) {
+        rememberFeedPage(cacheKey, page);
+      }
+      applyPage(page, setProfiles, setCursor, setHasMore);
     } catch (loadError) {
-      setError((loadError as Error).message);
+      setError(errorMessage(loadError));
     } finally {
       setLoading(false);
     }
-  }, [cursor, filters, hasMore, loading, mode]);
+  }, [cursor, filters, hasMore, loading, mode, viewerId]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -101,8 +113,13 @@ export function FeedClient({
   return (
     <section className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {profiles.map((profile) => (
-          <ProfileCard key={profile.uuid} mode={mode} profile={profile} />
+        {profiles.map((profile, index) => (
+          <ProfileCard
+            key={profile.uuid}
+            mode={mode}
+            prefetch={index < 12}
+            profile={profile}
+          />
         ))}
       </div>
 
@@ -133,4 +150,71 @@ function mergeProfiles(
 ): OverviewProfile[] {
   const seen = new Set(current.map((profile) => profile.uuid));
   return [...current, ...next.filter((profile) => !seen.has(profile.uuid))];
+}
+
+function applyPage(
+  page: FeedPageResponse,
+  setProfiles: Dispatch<SetStateAction<OverviewProfile[]>>,
+  setCursor: Dispatch<SetStateAction<string>>,
+  setHasMore: Dispatch<SetStateAction<boolean>>,
+) {
+  setProfiles((current) => mergeProfiles(current, page.profiles));
+  setCursor(page.cursor);
+  setHasMore(page.hasMore);
+}
+
+function feedPageUrl(
+  mode: FeedMode,
+  filters: FeedFilters,
+  cursor: string,
+): string {
+  const params = filtersToSearchParams(mode, filters, {
+    includeDefaultMode: true,
+    includeImplicitLocation: true,
+  });
+
+  params.set("cursor", cursor);
+  params.set("limit", String(DEFAULT_PROFILE_LIMIT));
+
+  return `/api/feed?${params.toString()}`;
+}
+
+async function parseFeedPageResponse(
+  response: Response,
+): Promise<FeedPageResponse> {
+  const data: unknown = await response.json();
+
+  if (isFeedPageResponse(data)) {
+    return data;
+  }
+
+  throw new Error("Could not load more profiles.");
+}
+
+function isFeedPageResponse(value: unknown): value is FeedPageResponse {
+  return (
+    isRecord(value) &&
+    Array.isArray(value.profiles) &&
+    typeof value.cursor === "string" &&
+    typeof value.hasMore === "boolean"
+  );
+}
+
+function rememberFeedPage(cacheKey: string, page: FeedPageResponse) {
+  feedPageCache.set(cacheKey, page);
+
+  if (feedPageCache.size <= MAX_FEED_PAGE_CACHE_SIZE) {
+    return;
+  }
+
+  const oldestKey = feedPageCache.keys().next().value;
+  if (typeof oldestKey === "string") {
+    feedPageCache.delete(oldestKey);
+  }
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error
+    ? error.message
+    : "Could not load more profiles.";
 }

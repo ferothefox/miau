@@ -50,11 +50,11 @@ describe("Barq request handling", () => {
       variables: {},
     });
 
-    expect((init.headers as Record<string, string>).authorization).toBe(
+    expect(headerValue(init.headers, "authorization")).toBe(
       `Bearer ${encodedJwt}`,
     );
-    expect(init.body).not.toContain('"id":123');
-    expect(init.body).not.toContain("secret");
+    expect(String(init.body ?? "")).not.toContain('"id":123');
+    expect(String(init.body ?? "")).not.toContain("secret");
   });
 
   test("normalizes known auth failures", () => {
@@ -93,6 +93,25 @@ describe("Barq request handling", () => {
     expect(profileDetailFragments).not.toContain("BlockedContentFragment");
   });
 });
+
+function headerValue(
+  headers: HeadersInit | undefined,
+  name: string,
+): string | undefined {
+  if (!headers) {
+    return undefined;
+  }
+
+  if (headers instanceof Headers) {
+    return headers.get(name) ?? undefined;
+  }
+
+  if (Array.isArray(headers)) {
+    return headers.find(([key]) => key.toLowerCase() === name)?.[1];
+  }
+
+  return headers[name];
+}
 
 describe("feed filters", () => {
   test("maps mode to isAd", () => {

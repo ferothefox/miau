@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { clearBarqReadCacheForToken } from "@/server/barq/cached";
 import { toClientSafeMessage } from "@/server/barq/errors";
 import { likeProfile, unlikeProfile } from "@/server/barq/operations";
 import { redirectToLoginOnAuthFailure } from "@/server/barq/redirects";
@@ -44,6 +45,7 @@ async function updateProfileLike(
       await unlikeProfile(session.token, { uuid });
     }
 
+    clearBarqReadCacheForToken(session.token);
     revalidatePath("/feed");
     revalidatePath(`/profiles/${uuid}`);
 

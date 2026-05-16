@@ -2,40 +2,42 @@ import { NextResponse } from "next/server";
 import {
   clampProfileLimit,
   nextCursor,
-  normalizeFeedFilters,
+  parseFeedFilters,
+  parseFeedMode,
+  type SearchParamRecord,
 } from "@/domain/barq/filters";
-import { DEFAULT_PROFILE_LIMIT, type FeedMode } from "@/domain/barq/types";
+import { DEFAULT_PROFILE_LIMIT } from "@/domain/barq/types";
 import { isBarqAuthError, toClientSafeMessage } from "@/server/barq/errors";
-import { profileSearch } from "@/server/barq/operations";
+import {
+  clearBarqReadCacheForToken,
+  getProfileSearchPage,
+} from "@/server/barq/cached";
 import { clearSession, getSession } from "@/server/session";
-import type { FeedPagePayload, FeedPageResponse } from "@/features/feed/types";
+import type { FeedPageResponse } from "@/features/feed/types";
 
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let payload: Partial<FeedPagePayload>;
-  try {
-    payload = (await request.json()) as Partial<FeedPagePayload>;
-  } catch {
-    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
-  }
-
-  const mode: FeedMode = payload.mode === "nsfw" ? "nsfw" : "sfw";
-  const filters = normalizeFeedFilters(payload.filters ?? {});
-  const cursor = typeof payload.cursor === "string" ? payload.cursor : "";
-  const limit = clampProfileLimit(payload.limit ?? DEFAULT_PROFILE_LIMIT);
+  const searchParams = new URL(request.url).searchParams;
+  const paramRecord = toSearchParamRecord(searchParams);
+  const mode = parseFeedMode(paramRecord);
+  const filters = parseFeedFilters(paramRecord);
+  const cursor = searchParams.get("cursor") ?? "";
+  const limit = clampProfileLimit(
+    numberSearchParam(searchParams, "limit") ?? DEFAULT_PROFILE_LIMIT,
+  );
 
   try {
-    const data = await profileSearch({
-      token: session.token,
+    const data = await getProfileSearchPage(
+      session.token,
       mode,
       filters,
       cursor,
       limit,
-    });
+    );
     const response: FeedPageResponse = {
       profiles: data.profileSearch,
       cursor: nextCursor(cursor, data.profileSearch.length),
@@ -45,6 +47,7 @@ export async function POST(request: Request) {
     return NextResponse.json(response);
   } catch (error) {
     if (isBarqAuthError(error)) {
+      clearBarqReadCacheForToken(session.token);
       await clearSession();
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -54,4 +57,27 @@ export async function POST(request: Request) {
       { status: 502 },
     );
   }
+}
+
+function toSearchParamRecord(searchParams: URLSearchParams): SearchParamRecord {
+  const record: SearchParamRecord = {};
+
+  for (const [key, value] of searchParams) {
+    record[key] = value;
+  }
+
+  return record;
+}
+
+function numberSearchParam(
+  searchParams: URLSearchParams,
+  key: string,
+): number | undefined {
+  const value = searchParams.get(key);
+  if (!value) {
+    return undefined;
+  }
+
+  const number = Number(value);
+  return Number.isFinite(number) ? number : undefined;
 }

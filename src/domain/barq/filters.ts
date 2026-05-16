@@ -12,7 +12,6 @@ import {
 export type SearchParamValue = string | string[] | undefined;
 export type SearchParamRecord = Record<string, SearchParamValue>;
 
-export const FEED_MODES = ["sfw", "nsfw"] as const;
 const LOCATION_SCOPES = ["distance", "city", "region", "country"] as const;
 const LEGACY_NO_LOCATION_FILTER_LABEL = "Anywhere";
 
@@ -225,59 +224,52 @@ export function toProfileSearchVariables({
   limit?: number;
 }): ProfileSearchVariables {
   const normalized = normalizeFeedFilters(filters);
+  const searchFilters: ProfileSearchVariables["filters"] = {};
   const variables: ProfileSearchVariables = {
     isAd: feedModeToIsAd(mode),
-    filters: {},
+    filters: searchFilters,
     cursor: cursor ?? "",
     limit: clampProfileLimit(limit),
   };
 
   if (normalized.displayName) {
-    variables.filters.displayName = normalized.displayName;
+    searchFilters.displayName = normalized.displayName;
   }
 
   if (normalized.location) {
-    variables.filters.location = {
-      latitude: normalized.location.latitude,
-      longitude: normalized.location.longitude,
-      type: normalized.location.type,
-      distance: normalized.location.distanceKm,
-    };
-
-    if (variables.filters.location.distance === undefined) {
-      delete variables.filters.location.distance;
-    }
+    searchFilters.location =
+      normalized.location.distanceKm === undefined
+        ? {
+            latitude: normalized.location.latitude,
+            longitude: normalized.location.longitude,
+            type: normalized.location.type,
+          }
+        : {
+            latitude: normalized.location.latitude,
+            longitude: normalized.location.longitude,
+            type: normalized.location.type,
+            distance: normalized.location.distanceKm,
+          };
   }
 
   if (normalized.requireProfileImage) {
-    variables.filters.requireProfileImage = true;
+    searchFilters.requireProfileImage = true;
   }
 
   if (normalized.ageMin !== undefined || normalized.ageMax !== undefined) {
-    variables.filters.age = {
-      min: normalized.ageMin,
-      max: normalized.ageMax,
-    };
-
-    if (variables.filters.age.min === undefined) {
-      delete variables.filters.age.min;
-    }
-
-    if (variables.filters.age.max === undefined) {
-      delete variables.filters.age.max;
-    }
+    searchFilters.age = ageFilter(normalized.ageMin, normalized.ageMax);
   }
 
   if (normalized.genders) {
-    variables.filters.genders = normalized.genders;
+    searchFilters.genders = normalized.genders;
   }
 
   if (normalized.relationshipStatus) {
-    variables.filters.relationshipStatus = normalized.relationshipStatus;
+    searchFilters.relationshipStatus = normalized.relationshipStatus;
   }
 
   if (normalized.sexPositions) {
-    variables.filters.sexPositions = normalized.sexPositions;
+    searchFilters.sexPositions = normalized.sexPositions;
   }
 
   return variables;
@@ -341,6 +333,23 @@ function normalizeAge(age: number | undefined): number | undefined {
   }
 
   return Math.max(18, Math.min(120, Math.trunc(age)));
+}
+
+function ageFilter(
+  min: number | undefined,
+  max: number | undefined,
+): { min?: number; max?: number } {
+  const age: { min?: number; max?: number } = {};
+
+  if (min !== undefined) {
+    age.min = min;
+  }
+
+  if (max !== undefined) {
+    age.max = max;
+  }
+
+  return age;
 }
 
 function normalizeList(list: string[] | undefined): string[] | undefined {

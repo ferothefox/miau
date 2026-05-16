@@ -2,6 +2,7 @@ import "server-only";
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { isRecord } from "@/lib/type-guards";
 
 const SESSION_COOKIE = "barq_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
@@ -76,10 +77,15 @@ function decodeJwtPayload(token: string): JwtPayload | null {
       normalized.length + ((4 - (normalized.length % 4)) % 4),
       "=",
     );
-    return JSON.parse(
+    const parsed: unknown = JSON.parse(
       Buffer.from(padded, "base64").toString("utf8"),
-    ) as JwtPayload;
+    );
+    return isJwtPayload(parsed) ? parsed : null;
   } catch {
     return null;
   }
+}
+
+function isJwtPayload(value: unknown): value is JwtPayload {
+  return isRecord(value);
 }

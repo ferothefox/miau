@@ -7,9 +7,11 @@ import { BarqImage } from "@/features/profile/barq-image";
 export function ProfileCard({
   profile,
   mode,
+  prefetch = false,
 }: {
   profile: OverviewProfile;
   mode: FeedMode;
+  prefetch?: boolean;
 }) {
   const image = choosePrimaryImage(profile, mode);
   const distance = distanceLabel(profile.location?.distance);
@@ -18,6 +20,7 @@ export function ProfileCard({
     <Link
       className="group overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-sm transition hover:-translate-y-0.5 hover:border-ring/50 hover:shadow-md"
       href={`/profiles/${profile.uuid}?mode=${mode}`}
+      prefetch={prefetch ? true : undefined}
     >
       <div className="relative aspect-square overflow-hidden bg-muted">
         {image ? (

@@ -31,10 +31,6 @@ export class BarqUpstreamError extends Error {
   }
 }
 
-export function isBarqClientError(error: unknown): error is BarqUpstreamError {
-  return error instanceof BarqUpstreamError;
-}
-
 export function isBarqAuthError(error: unknown): boolean {
   return (
     error instanceof BarqUpstreamError &&
@@ -98,7 +94,7 @@ export function normalizeNetworkError(
 
 export function detectAuthErrorCode(value: unknown): BarqErrorCode | null {
   const serialized = JSON.stringify(value);
-  const text = serialized?.toLowerCase() ?? "";
+  const text = typeof serialized === "string" ? serialized.toLowerCase() : "";
 
   if (!text) {
     return null;

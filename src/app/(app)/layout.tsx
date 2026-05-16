@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { choosePrimaryImage } from "@/domain/barq/images";
 import { normalizeProfileDetail } from "@/domain/barq/normalize";
 import { UserMenu } from "@/features/auth/user-menu";
-import { getViewerUser, preloadViewerUser } from "@/server/barq/cached";
+import { getViewerUser } from "@/server/barq/cached";
 import { redirectToLoginOnAuthFailure } from "@/server/barq/redirects";
 import { requireSession } from "@/server/session";
 
@@ -14,7 +14,6 @@ export default async function AppLayout({
   children: React.ReactNode;
 }>) {
   const session = await requireSession();
-  preloadViewerUser(session.token);
 
   return (
     <div className="min-h-dvh bg-background text-foreground">
@@ -30,21 +29,12 @@ export default async function AppLayout({
           <Link
             className="text-lg font-semibold tracking-tight text-foreground"
             href="/feed"
+            prefetch
           >
             MIAU!
           </Link>
           <nav className="flex items-center gap-3 text-sm">
-            <Suspense
-              fallback={
-                <Button
-                  aria-label="Open account menu"
-                  className="rounded-full"
-                  disabled
-                  size="icon-lg"
-                  variant="outline"
-                />
-              }
-            >
+            <Suspense fallback={<AccountMenuFallback />}>
               <ViewerMenu token={session.token} />
             </Suspense>
           </nav>
@@ -66,6 +56,18 @@ async function ViewerMenu({ token }: { token: string }) {
       image={profileImage}
       username={profile.username}
       uuid={profile.uuid}
+    />
+  );
+}
+
+function AccountMenuFallback() {
+  return (
+    <Button
+      aria-label="Account menu loading"
+      className="rounded-full"
+      disabled
+      size="icon-lg"
+      variant="outline"
     />
   );
 }

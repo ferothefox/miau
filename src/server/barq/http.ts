@@ -1,5 +1,6 @@
 import "server-only";
 
+import { isRecord } from "@/lib/type-guards";
 import {
   BarqUpstreamError,
   normalizeGraphQLErrors,
@@ -33,19 +34,25 @@ export async function barqGraphQL<TData, TVariables>({
     throw normalizeNetworkError(error, operationName);
   }
 
-  const body = await parseJsonSafely(response);
+  const body = await parseJsonSafely<TData>(response);
 
   if (!response.ok) {
     throw normalizeHttpError(response.status, body, operationName);
   }
 
-  const payload = body as GraphQLResponse<TData>;
-
-  if (payload.errors) {
-    throw normalizeGraphQLErrors(payload.errors, operationName);
+  if (!body) {
+    throw new BarqUpstreamError({
+      code: "UNKNOWN",
+      message: "Barq returned an empty response.",
+      operationName,
+    });
   }
 
-  if (!payload.data) {
+  if (body.errors) {
+    throw normalizeGraphQLErrors(body.errors, operationName);
+  }
+
+  if (!body.data) {
     throw new BarqUpstreamError({
       code: "UNKNOWN",
       message: "Barq returned an empty response.",
@@ -54,13 +61,22 @@ export async function barqGraphQL<TData, TVariables>({
     });
   }
 
-  return payload.data;
+  return body.data;
 }
 
-async function parseJsonSafely(response: Response): Promise<unknown> {
+async function parseJsonSafely<TData>(
+  response: Response,
+): Promise<GraphQLResponse<TData> | null> {
   try {
-    return await response.json();
+    const body: unknown = await response.json();
+    return isGraphQLResponse<TData>(body) ? body : null;
   } catch {
     return null;
   }
+}
+
+function isGraphQLResponse<TData>(
+  value: unknown,
+): value is GraphQLResponse<TData> {
+  return isRecord(value);
 }

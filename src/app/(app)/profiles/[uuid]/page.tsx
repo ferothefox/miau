@@ -18,7 +18,7 @@ import type {
   ProfileDetail,
   Sona,
 } from "@/domain/barq/types";
-import { profileDetail } from "@/server/barq/operations";
+import { getProfileDetail } from "@/server/barq/cached";
 import { redirectToLoginOnAuthFailure } from "@/server/barq/redirects";
 import { requireSession } from "@/server/session";
 import { BarqImage } from "@/features/profile/barq-image";
@@ -35,7 +35,7 @@ export default async function ProfilePage({
   const [{ uuid }, query] = await Promise.all([params, searchParams]);
   const mode = parseFeedMode(query);
   const session = await requireSession();
-  const data = await profileDetail(session.token, { uuid }).catch(
+  const data = await getProfileDetail(session.token, uuid).catch(
     redirectToLoginOnAuthFailure,
   );
 

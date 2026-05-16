@@ -378,11 +378,7 @@ export function FeedFiltersForm({
                     active={relationshipStatus.includes(value)}
                     onClick={() =>
                       setRelationshipStatus((values) =>
-                        toggleListValue(
-                          values,
-                          value,
-                          !values.includes(value),
-                        ),
+                        toggleListValue(values, value, !values.includes(value)),
                       )
                     }
                   >
