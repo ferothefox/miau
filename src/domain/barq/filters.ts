@@ -4,6 +4,8 @@ import {
   type FeedFilters,
   type FeedLocationScope,
   type FeedMode,
+  type Place,
+  type ProfileLocation,
   type ProfileSearchVariables,
 } from "./types";
 
@@ -124,6 +126,33 @@ export function parseFeedFilters(searchParams: SearchParamRecord): FeedFilters {
   }
 
   return normalizeFeedFilters(filters);
+}
+
+export function applyDefaultFeedLocation(
+  filters: FeedFilters,
+  profileLocation: ProfileLocation | null | undefined,
+): FeedFilters {
+  const normalized = normalizeFeedFilters(filters);
+
+  if (normalized.location) {
+    return normalized;
+  }
+
+  const place = profileLocation?.place ?? profileLocation?.homePlace;
+  if (!place) {
+    return normalized;
+  }
+
+  return normalizeFeedFilters({
+    ...normalized,
+    location: {
+      latitude: place.latitude,
+      longitude: place.longitude,
+      type: "distance",
+    },
+    locationLabel: placeLabel(place),
+    radius: "infinite",
+  });
 }
 
 export function normalizeFeedFilters(filters: FeedFilters): FeedFilters {
@@ -292,6 +321,12 @@ function normalizeAge(age: number | undefined): number | undefined {
 function normalizeList(list: string[] | undefined): string[] | undefined {
   const values = list?.map((item) => item.trim()).filter(Boolean);
   return values?.length ? Array.from(new Set(values)) : undefined;
+}
+
+function placeLabel(place: Place): string {
+  return [place.place, place.region, place.countryCode]
+    .filter(Boolean)
+    .join(", ");
 }
 
 function setParam(

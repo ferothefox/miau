@@ -1,16 +1,20 @@
+import { redirect } from "next/navigation";
 import {
   DEFAULT_PROFILE_LIMIT,
   type OverviewProfile,
 } from "@/domain/barq/types";
 import {
+  applyDefaultFeedLocation,
   feedCacheKey,
+  filtersToSearchParams,
   nextCursor,
   parseFeedFilters,
   parseFeedMode,
   type SearchParamRecord,
 } from "@/domain/barq/filters";
+import { normalizeProfileDetail } from "@/domain/barq/normalize";
 import { toClientSafeMessage } from "@/server/barq/errors";
-import { profileSearch } from "@/server/barq/operations";
+import { profileSearch, user } from "@/server/barq/operations";
 import { redirectToLoginOnAuthFailure } from "@/server/barq/redirects";
 import { requireSession } from "@/server/session";
 import { FeedClient } from "@/features/feed/feed-client";
@@ -23,9 +27,17 @@ export default async function FeedPage({
 }) {
   const params = await searchParams;
   const mode = parseFeedMode(params);
-  const filters = parseFeedFilters(params);
   const session = await requireSession();
+  const viewer = await user(session.token).catch(redirectToLoginOnAuthFailure);
+  const viewerProfile = normalizeProfileDetail(viewer.user.profile);
+  const parsedFilters = parseFeedFilters(params);
+  const filters = applyDefaultFeedLocation(parsedFilters, viewerProfile.location);
   const cacheKey = feedCacheKey(session.viewerId, mode, filters).join(":");
+  const filterKey = filtersToSearchParams(mode, filters).toString();
+
+  if (!parsedFilters.location && filters.location) {
+    redirect(`/feed?${filterKey}`);
+  }
 
   let profiles: OverviewProfile[] = [];
   let error: string | null = null;
@@ -53,7 +65,7 @@ export default async function FeedPage({
         </p>
       </div>
 
-      <FeedFiltersForm filters={filters} mode={mode} />
+      <FeedFiltersForm key={filterKey} filters={filters} mode={mode} />
 
       {error ? (
         <section className="rounded-xl border border-destructive/30 bg-destructive/10 p-5 text-sm text-destructive">

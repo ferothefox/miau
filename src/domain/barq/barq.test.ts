@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  applyDefaultFeedLocation,
   clampProfileLimit,
   feedModeToIsAd,
   filtersToSearchParams,
@@ -136,6 +137,38 @@ describe("feed filters", () => {
     expect(variables.limit).toBe(99);
     expect(variables.filters.location?.distance).toBe(161);
     expect(variables.filters.age?.min).toBe(21);
+  });
+
+  test("defaults feed location from the viewer current place", () => {
+    const filters = applyDefaultFeedLocation(
+      {},
+      {
+        type: "gps",
+        distance: null,
+        precision: null,
+        homePlace: null,
+        place: {
+          id: "3035",
+          place: "Tempe",
+          region: "Arizona",
+          country: "United States",
+          countryCode: "US",
+          longitude: -111.9094,
+          latitude: 33.4144,
+          __typename: "Place",
+        },
+        __typename: "ProfileLocation",
+      },
+    );
+
+    expect(filters.locationLabel).toBe("Tempe, Arizona, US");
+    expect(filters.location).toEqual({
+      latitude: 33.4144,
+      longitude: -111.9094,
+      type: "distance",
+      distanceKm: undefined,
+    });
+    expect(filters.radius).toBe("infinite");
   });
 });
 

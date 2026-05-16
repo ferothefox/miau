@@ -70,7 +70,9 @@ export function LocationAutocomplete({
         onChange={(event) => {
           selectedLabel.current = "";
           setQuery(event.target.value);
-          onSelect(null);
+          if (!event.target.value.trim()) {
+            onSelect(null);
+          }
         }}
       />
       {(places.length > 0 || loading) && (

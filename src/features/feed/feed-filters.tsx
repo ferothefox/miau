@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -60,6 +60,8 @@ const RADII = [
   { label: "250 miles", value: "250mi" },
 ] as const;
 
+const LIVE_FILTER_DELAY_MS = 300;
+
 export function FeedFiltersForm({
   mode,
   filters,
@@ -68,6 +70,7 @@ export function FeedFiltersForm({
   filters: FeedFilters;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [draftMode, setDraftMode] = useState(mode);
   const [location, setLocation] = useState<SelectedLocation | null>(
     filters.location
@@ -78,16 +81,79 @@ export function FeedFiltersForm({
         }
       : null,
   );
+  const [displayName, setDisplayName] = useState(filters.displayName ?? "");
+  const [ageMin, setAgeMin] = useState(
+    filters.ageMin === undefined ? "" : String(filters.ageMin),
+  );
+  const [ageMax, setAgeMax] = useState(
+    filters.ageMax === undefined ? "" : String(filters.ageMax),
+  );
+  const [scope, setScope] = useState<FeedLocationScope>(
+    filters.location?.type ?? "distance",
+  );
+  const [radius, setRadius] = useState<"infinite" | "100mi" | "250mi">(
+    filters.radius ?? "infinite",
+  );
+  const [requireProfileImage, setRequireProfileImage] = useState(
+    filters.requireProfileImage ?? false,
+  );
+  const [genders, setGenders] = useState(filters.genders ?? []);
+  const [relationshipStatus, setRelationshipStatus] = useState(
+    filters.relationshipStatus ?? [],
+  );
+  const [sexPositions, setSexPositions] = useState(
+    filters.sexPositions ?? [],
+  );
+  const nextFilters = useMemo(
+    () =>
+      buildFilters({
+        ageMax,
+        ageMin,
+        displayName,
+        genders,
+        location,
+        radius,
+        relationshipStatus,
+        requireProfileImage,
+        scope,
+        sexPositions,
+      }),
+    [
+      ageMax,
+      ageMin,
+      displayName,
+      genders,
+      location,
+      radius,
+      relationshipStatus,
+      requireProfileImage,
+      scope,
+      sexPositions,
+    ],
+  );
+  const nextSearchParams = useMemo(
+    () => filtersToSearchParams(draftMode, nextFilters).toString(),
+    [draftMode, nextFilters],
+  );
+  const currentSearchParams = searchParams.toString();
+
+  useEffect(() => {
+    if (currentSearchParams === nextSearchParams) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      router.replace(`/feed?${nextSearchParams}`, { scroll: false });
+    }, LIVE_FILTER_DELAY_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [currentSearchParams, nextSearchParams, router]);
 
   return (
     <form
       className="grid gap-6"
       onSubmit={(event) => {
         event.preventDefault();
-        const formData = new FormData(event.currentTarget);
-        const nextFilters = filtersFromFormData(formData, location);
-        const params = filtersToSearchParams(draftMode, nextFilters);
-        router.push(`/feed?${params.toString()}`);
       }}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -97,43 +163,46 @@ export function FeedFiltersForm({
               key={value}
               type="button"
               variant={draftMode === value ? "default" : "outline"}
+              aria-pressed={draftMode === value}
               onClick={() => setDraftMode(value)}
             >
               {value.toUpperCase()}
             </Button>
           ))}
         </div>
-        <Button type="submit">Apply filters</Button>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-4">
         <div className="grid gap-2 lg:col-span-2">
           <Label htmlFor="displayName">Display name</Label>
           <Input
-            defaultValue={filters.displayName ?? ""}
             id="displayName"
             name="displayName"
             type="search"
+            value={displayName}
+            onChange={(event) => setDisplayName(event.target.value)}
           />
         </div>
         <div className="grid gap-2">
           <Label htmlFor="ageMin">Age min</Label>
           <Input
-            defaultValue={filters.ageMin ?? ""}
             id="ageMin"
             min={18}
             name="ageMin"
             type="number"
+            value={ageMin}
+            onChange={(event) => setAgeMin(event.target.value)}
           />
         </div>
         <div className="grid gap-2">
           <Label htmlFor="ageMax">Age max</Label>
           <Input
-            defaultValue={filters.ageMax ?? ""}
             id="ageMax"
             min={18}
             name="ageMax"
             type="number"
+            value={ageMax}
+            onChange={(event) => setAgeMax(event.target.value)}
           />
         </div>
       </div>
@@ -149,9 +218,14 @@ export function FeedFiltersForm({
         <div className="grid gap-2">
           <Label>Scope</Label>
           <Select
-            defaultValue={filters.location?.type ?? "distance"}
             items={LOCATION_SCOPES}
             name="scope"
+            value={scope}
+            onValueChange={(value) => {
+              if (isLocationScope(value)) {
+                setScope(value);
+              }
+            }}
           >
             <SelectTrigger>
               <SelectValue />
@@ -170,9 +244,14 @@ export function FeedFiltersForm({
         <div className="grid gap-2">
           <Label>Radius</Label>
           <Select
-            defaultValue={filters.radius ?? "infinite"}
             items={RADII}
             name="radius"
+            value={radius}
+            onValueChange={(value) => {
+              if (isRadius(value)) {
+                setRadius(value);
+              }
+            }}
           >
             <SelectTrigger>
               <SelectValue />
@@ -192,30 +271,34 @@ export function FeedFiltersForm({
 
       <div className="grid gap-4 lg:grid-cols-3">
         <CheckboxGroup
-          defaultValues={filters.genders}
           label="Genders"
           name="genders"
           options={GENDERS.map((value) => [value, value])}
+          values={genders}
+          onValuesChange={setGenders}
         />
         <CheckboxGroup
-          defaultValues={filters.relationshipStatus}
           label="Relationship"
           name="relationshipStatus"
           options={RELATIONSHIPS}
+          values={relationshipStatus}
+          onValuesChange={setRelationshipStatus}
         />
         <CheckboxGroup
-          defaultValues={filters.sexPositions}
           label="Sex positions"
           name="sexPositions"
           options={SEX_POSITIONS}
+          values={sexPositions}
+          onValuesChange={setSexPositions}
         />
       </div>
 
       <Label>
         <Checkbox
-          defaultChecked={filters.requireProfileImage ?? false}
+          checked={requireProfileImage}
           name="requireProfileImage"
           value="1"
+          onCheckedChange={setRequireProfileImage}
         />
         Require profile image
       </Label>
@@ -224,15 +307,17 @@ export function FeedFiltersForm({
 }
 
 function CheckboxGroup({
-  defaultValues,
   label,
   name,
+  onValuesChange,
   options,
+  values,
 }: {
-  defaultValues?: string[];
   label: string;
   name: string;
+  onValuesChange: (values: string[]) => void;
   options: readonly (readonly [string, string])[];
+  values: string[];
 }) {
   return (
     <div aria-label={label} className="grid gap-2" role="group">
@@ -241,9 +326,12 @@ function CheckboxGroup({
         {options.map(([value, text]) => (
           <Label key={value}>
             <Checkbox
-              defaultChecked={defaultValues?.includes(value)}
+              checked={values.includes(value)}
               name={name}
               value={value}
+              onCheckedChange={(checked) => {
+                onValuesChange(toggleListValue(values, value, checked));
+              }}
             />
             {text}
           </Label>
@@ -253,21 +341,37 @@ function CheckboxGroup({
   );
 }
 
-function filtersFromFormData(
-  formData: FormData,
-  location: SelectedLocation | null,
-): FeedFilters {
-  const scope = formText(formData, "scope") as FeedLocationScope;
-  const radius = formText(formData, "radius");
-
+function buildFilters({
+  ageMax,
+  ageMin,
+  displayName,
+  genders,
+  location,
+  radius,
+  relationshipStatus,
+  requireProfileImage,
+  scope,
+  sexPositions,
+}: {
+  ageMax: string;
+  ageMin: string;
+  displayName: string;
+  genders: string[];
+  location: SelectedLocation | null;
+  radius: "infinite" | "100mi" | "250mi";
+  relationshipStatus: string[];
+  requireProfileImage: boolean;
+  scope: FeedLocationScope;
+  sexPositions: string[];
+}): FeedFilters {
   return {
-    displayName: formText(formData, "displayName"),
-    ageMin: formNumber(formData, "ageMin"),
-    ageMax: formNumber(formData, "ageMax"),
-    requireProfileImage: formData.get("requireProfileImage") === "1",
-    genders: formData.getAll("genders").map(String),
-    relationshipStatus: formData.getAll("relationshipStatus").map(String),
-    sexPositions: formData.getAll("sexPositions").map(String),
+    displayName: displayName.trim() || undefined,
+    ageMin: formNumber(ageMin),
+    ageMax: formNumber(ageMax),
+    requireProfileImage,
+    genders,
+    relationshipStatus,
+    sexPositions,
     location: location
       ? {
           latitude: location.latitude,
@@ -282,17 +386,37 @@ function filtersFromFormData(
   };
 }
 
-function formText(formData: FormData, key: string): string | undefined {
-  const value = formData.get(key);
-  return typeof value === "string" && value.trim() ? value.trim() : undefined;
-}
-
-function formNumber(formData: FormData, key: string): number | undefined {
-  const value = formText(formData, key);
-  if (!value) {
+function formNumber(value: string): number | undefined {
+  const text = value.trim();
+  if (!text) {
     return undefined;
   }
 
-  const number = Number(value);
+  const number = Number(text);
   return Number.isFinite(number) ? number : undefined;
+}
+
+function isLocationScope(value: unknown): value is FeedLocationScope {
+  return (
+    value === "distance" ||
+    value === "city" ||
+    value === "region" ||
+    value === "country"
+  );
+}
+
+function isRadius(value: unknown): value is "infinite" | "100mi" | "250mi" {
+  return value === "infinite" || value === "100mi" || value === "250mi";
+}
+
+function toggleListValue(
+  values: string[],
+  value: string,
+  checked: boolean,
+): string[] {
+  if (checked) {
+    return values.includes(value) ? values : [...values, value];
+  }
+
+  return values.filter((item) => item !== value);
 }
